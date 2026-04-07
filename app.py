@@ -4,24 +4,31 @@ import base64
 from datetime import datetime
 
 # 페이지 기본 설정
-st.set_page_config(page_title="제이원 자동 제안서 생성기", layout="wide")
+st.set_page_config(page_title="자동 제안서 생성기", layout="wide")
 
-st.title("📊 주식회사 제이원 - 컨설팅 제안서 자동 생성기")
+st.title("📊 맞춤형 경영컨설팅 제안서 자동 생성기")
 st.write("좌측에 기업별 맞춤 정보를 입력하시면, 우측에 고정 템플릿이 결합된 제안서가 실시간으로 완성됩니다.")
 
 # 화면 분할 (입력폼 1 : 미리보기 2)
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.subheader("📝 1. 가변 정보 입력 (기업별 맞춤)")
+    st.subheader("📝 1. 기본 정보 입력")
     
-    # 1. 회사 이름
-    client_name = st.text_input("고객사명", "제이텍")
+    # 제안사 및 고객사 정보
+    my_company_name = st.text_input("제안사 이름 (우측 하단 표기)", "주식회사 제이원")
+    client_name = st.text_input("고객사 이름 (타이틀 표기)", "(주)영광산업기계")
     
-    # 2. 업종 코드
-    industry_code = st.text_input("업종 코드 및 상태 (예: 21812 / 뿌리기업)", "[21812] 뿌리기업 해당")
+    # 제안 일자 (기본값은 오늘 날짜로 세팅하되 자유롭게 수정 가능)
+    today_str = datetime.now().strftime('%Y년 %m월 %d일')
+    proposal_date = st.text_input("제안 일자", today_str)
+
+    st.subheader("📝 2. 맞춤 컨설팅 정보")
     
-    # 3. 제안 내용 (여러 줄 입력)
+    # 업종 코드
+    industry_code = st.text_input("업종 코드 및 상태 (예: [21812] 뿌리기업 해당)", "[21812] 뿌리기업 해당")
+    
+    # 제안 내용 (여러 줄 입력)
     proposal_input = st.text_area(
         "핵심 컨설팅 제안 내용 (줄바꿈으로 구분)", 
         "연구개발비 산입 (경상연구개발비, 개발비 : 매출액 5%)\n뿌리기업 → 소부장인증 → 벤처인증 기업으로 빌드업\n경영혁신형(메인비즈) 및 가족친화인증기업 획득\n수출바우처 및 혁신성장바우처를 통한 무상 특허 확보\n5인 이상 사업장에 따른 행정/노무 정비 및 지원금 수령"
@@ -29,8 +36,8 @@ with col1:
     # 입력받은 텍스트를 HTML 리스트(<li>) 형태로 변환
     proposal_items = "".join([f"<li class='mb-2 flex items-start'><span class='text-blue-500 mr-2'>✔</span><span class='break-keep'>{line.strip()}</span></li>" for line in proposal_input.split('\n') if line.strip()])
     
-    # 4. 스케쥴표 시작 월 설정
-    start_month = st.number_input("스케쥴 시작 월 (숫자만 입력)", min_value=1, max_value=12, value=6)
+    # 스케쥴표 시작 월 설정
+    start_month = st.number_input("스케쥴 시작 월 (숫자만 입력)", min_value=1, max_value=12, value=4)
     
     # 스케쥴 달 계산 (12월이 넘어가면 1월로 순환)
     m1 = start_month
@@ -83,8 +90,8 @@ html_content = f"""
                 <p class="text-slate-400 font-light">업종코드: {industry_code}</p>
             </div>
             <div class="mt-4 md:mt-0 text-right">
-                <p class="text-slate-400 text-sm">제안일자: {datetime.now().strftime('%Y년 %m월 %d일')}</p>
-                <p class="text-xl font-bold mt-1">주식회사 제이원</p>
+                <p class="text-slate-400 text-sm">제안일자: {proposal_date}</p>
+                <p class="text-xl font-bold mt-1">{my_company_name}</p>
             </div>
         </div>
     </header>
