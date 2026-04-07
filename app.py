@@ -1,7 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import base64
-from datetime import datetime
 
 # 페이지 기본 설정
 st.set_page_config(page_title="자동 제안서 생성기", layout="wide")
@@ -19,9 +18,7 @@ with col1:
     my_company_name = st.text_input("제안사 이름 (우측 하단 표기)", "주식회사 제이원")
     client_name = st.text_input("고객사 이름 (타이틀 표기)", "(주)영광산업기계")
     
-    # 제안 일자 (기본값은 오늘 날짜로 세팅하되 자유롭게 수정 가능)
-    today_str = datetime.now().strftime('%Y년 %m월 %d일')
-    proposal_date = st.text_input("제안 일자", today_str)
+    st.info("💡 제안 일자는 엑셀의 TODAY() 함수처럼 파일을 열 때마다 오늘 날짜로 자동 변경되도록 스크립트가 적용되었습니다.")
 
     st.subheader("📝 2. 맞춤 컨설팅 정보")
     
@@ -90,7 +87,7 @@ html_content = f"""
                 <p class="text-slate-400 font-light">업종코드: {industry_code}</p>
             </div>
             <div class="mt-4 md:mt-0 text-right">
-                <p class="text-slate-400 text-sm">제안일자: {proposal_date}</p>
+                <p class="text-slate-400 text-sm">제안일자: <span id="auto_date"></span></p>
                 <p class="text-xl font-bold mt-1">{my_company_name}</p>
             </div>
         </div>
@@ -270,8 +267,15 @@ html_content = f"""
     </main>
 
     <script>
+        // 1. 날짜 자동 출력 스크립트 (엑셀 TODAY 함수 기능)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        document.getElementById('auto_date').innerText = year + '년 ' + month + '월 ' + day + '일';
+
+        // 2. 탭 전환 스크립트
         function switchTab(tabId, element) {{
-            // 탭 버튼 스타일 변경
             document.querySelectorAll('.tab-btn').forEach(btn => {{
                 btn.classList.remove('text-blue-600', 'border-blue-600', 'font-bold');
                 btn.classList.add('text-slate-500', 'border-transparent', 'font-medium');
@@ -279,7 +283,6 @@ html_content = f"""
             element.classList.remove('text-slate-500', 'border-transparent', 'font-medium');
             element.classList.add('text-blue-600', 'border-blue-600', 'font-bold');
 
-            // 콘텐츠 전환
             document.querySelectorAll('.tab-content').forEach(content => {{
                 content.classList.remove('active');
             }});
