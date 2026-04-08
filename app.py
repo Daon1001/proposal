@@ -4,9 +4,9 @@ import base64
 from datetime import datetime
 
 # 페이지 기본 설정
-st.set_page_config(page_title="통합 경영제안서 생성기", layout="wide")
+st.set_page_config(page_title="제이원 통합 경영제안서 생성기", layout="wide")
 
-st.title("📊통합 경영컨설팅 시스템")
+st.title("📊 주식회사 제이원 - 통합 경영컨설팅 시스템")
 st.write("좌측에 정보를 입력하세요. 모든 상세 데이터가 요약 없이 원문 그대로 제안서에 반영됩니다.")
 
 # 화면 분할 (입력폼 1 : 미리보기 2)
@@ -97,7 +97,7 @@ with col1:
     monthly_wage = min_wage * 209
 
 # ----------------------------------------------------------------------------------
-# HTML 소스코드 (인쇄 시 법인 탭 제외 로직 적용)
+# HTML 소스코드 (인쇄 시 그래프 보존 로직 추가)
 # ----------------------------------------------------------------------------------
 html_content = f"""
 <!DOCTYPE html>
@@ -116,16 +116,11 @@ html_content = f"""
         .check-list li::before {{ content: '✔'; color: #0ea5e9; margin-right: 8px; font-weight: bold; }}
         .danger-list li::before {{ content: '⚠️'; margin-right: 8px; font-weight: bold; }}
         
-        /* 🖨️ 인쇄 설정: 가로 방향 및 페이지 분할 */
+        /* 인쇄 전용 스타일 */
         @media print {{
-            @page {{
-                size: A4 landscape;
-                margin: 10mm;
-            }}
+            @page {{ size: A4 landscape; margin: 10mm; }}
             body {{ background-color: #ffffff !important; }}
             .sticky, .tab-btn, #print_btn {{ display: none !important; }}
-            
-            /* 활성화된 탭 내용만 펼치기 */
             .tab-content {{ display: none !important; }}
             .tab-content.print-active {{ 
                 display: block !important; 
@@ -137,7 +132,12 @@ html_content = f"""
             #tab_proposal {{ page-break-before: avoid !important; }}
             .print-break-inside-avoid {{ page-break-inside: avoid; break-inside: avoid; }}
             .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
+            
+            /* 인쇄 시 그래프 캔버스를 숨기고 이미지를 보여줌 */
+            #taxChart {{ display: none !important; }}
+            #chartImage {{ display: block !important; width: 100% !important; }}
         }}
+        #chartImage {{ display: none; }}
     </style>
 </head>
 <body class="antialiased">
@@ -193,7 +193,7 @@ html_content = f"""
                     <ul class="text-xs space-y-2 danger-list">
                         <li><b>형사처벌 리스크:</b> 정규직 미작성 시 벌금 최대 500만 원 (전과 기록)</li>
                         <li><b>즉시 부과 리스크:</b> 단시간/기간제 미작성 시 <b>과태료 500만 원 즉시 부과</b></li>
-                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서 부재는 사업주가 100% 불리한 책임을 지게 됩니다.</li>
+                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서가 없으면 사업주가 100% 불리한 책임을 지게 됩니다.</li>
                     </ul>
                 </div>
             </div>
@@ -233,7 +233,6 @@ html_content = f"""
                         <p class="text-sm text-emerald-600 font-bold">월 20만원</p>
                     </div>
                 </div>
-                <p class="text-[10px] text-emerald-700 mt-4 text-center">※ 비과세 세팅 시, 근로자 소득세 절감은 물론 사업주 4대보험료 약 10% 추가 절감 효과가 즉시 발생합니다.</p>
             </div>
         </div>
 
@@ -254,7 +253,10 @@ html_content = f"""
                             <p class="text-lg font-bold">💡 법인 전환 시, 연간 약 <span class="text-2xl text-emerald-700">{max(0, tax_diff):,.0f}만 원</span> 절세 기대</p>
                         </div>
                     </div>
-                    <div class="h-64 flex justify-center"><canvas id="taxChart"></canvas></div>
+                    <div class="h-64 flex justify-center border rounded-xl bg-slate-50 p-2 relative">
+                        <canvas id="taxChart"></canvas>
+                        <img id="chartImage" />
+                    </div>
                 </div>
             </div>
         </div>
@@ -271,23 +273,11 @@ html_content = f"""
                 </div>
                 <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
                     <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">직접생산확인서 / 공장등록</h3><p class="text-[10px] text-slate-500">• 공공조발 필수 / 제조업 세제 혜택</p>
+                    <h3 class="font-bold text-sm mb-1">직접생산확인서 / 공장등록</h3><p class="text-[10px] text-slate-500">• 공공조달 필수 / 제조업 세제 혜택</p>
                 </div>
                 <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
                     <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
                     <h3 class="font-bold text-sm mb-1">ISO 9001/14001/45001</h3><p class="text-[10px] text-slate-500">• 품질/환경/안전 통합 / 대기업 필수요건</p>
-                </div>
-                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
-                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">메인비즈 / 이노비즈</h3><p class="text-[10px] text-slate-500">• 경영 및 기술 혁신형 인증 / 금융 우대</p>
-                </div>
-                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
-                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">기업부설연구소 / 전담부서</h3><p class="text-[10px] text-slate-500">• 법인세 25% 공제 / 연구비 비과세</p>
-                </div>
-                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
-                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">특허 (비용 400~1000만)</h3><p class="text-[10px] text-slate-500">• 기술 독점권 확보 / 기술력 공식 입증</p>
                 </div>
             </div>
         </div>
@@ -300,28 +290,13 @@ html_content = f"""
                     <ul class="text-xs space-y-2 text-emerald-700">
                         <li>• <b>[중진공 직접융자]</b> 고정금리 연 2.5~3.5%, 운전 5억/시설 60억 한도</li>
                         <li>• <b>[혁신바우처]</b> 최대 5,000만원 무상 (시제품제작, 마케팅, 컨설팅 지원)</li>
-                        <li>• <b>[수출바우처]</b> 해외 진출 비용 최대 3,000만원 ~ 1억원 (90% 지원)</li>
-                    </ul>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2">🔵 2. 보증기관 (신보/기보) 및 금융권</h3>
-                    <ul class="text-xs space-y-2 text-blue-700">
-                        <li>• <b>[보증서 대출]</b> 담보 없이 보증서 발급 (금리 4.0~5.5%), 보증료 감면 혜택</li>
-                        <li>• <b>[시중은행]</b> 재무제표 기반 자체 한도 산출, 정책자금 융통 시 이자 감면 연계</li>
                     </ul>
                 </div>
                 <div class="bg-red-50 p-6 rounded-2xl border border-red-100 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 3. 안전보건공단 지원 (보조금/융자)</h3>
+                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 2. 안전보건공단 지원 (보조금/융자)</h3>
                     <ul class="text-xs space-y-2 text-red-700">
                         <li>• <b>[안전동행지원]</b> 고위험 설비 교체 시 <b>최대 1억 무상지원</b> (50% 자부담)</li>
                         <li>• <b>[산업재해예방융자]</b> 안전 설비 도입 시 <b>연 1.5% 고정금리</b> (최대 10억)</li>
-                    </ul>
-                </div>
-                <div class="bg-purple-50 p-6 rounded-2xl border border-purple-200 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-purple-800 mb-3 border-b border-purple-200 pb-2">🟣 4. 지자체 정책자금 (도/시 자금)</h3>
-                    <ul class="text-xs space-y-2 text-purple-700">
-                        <li>• <b>[이차보전 지원]</b> 은행 이자 중 1.0~3.0%를 지자체가 대신 납부하여 실질 이자 절감</li>
-                        <li>• <b>[시흥시 자금]</b> 시 전용 예산으로 저리 운용 (조기 소진 유의 및 적기 신청 필수)</li>
                     </ul>
                 </div>
             </div>
@@ -332,8 +307,7 @@ html_content = f"""
                 <h2 class="text-2xl font-bold mb-6 pb-4 border-b">📅 컨설팅 마스터 로드맵</h2>
                 <div class="space-y-8">
                     <div class="flex gap-6 items-start"><div class="bg-slate-800 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월</div><div><p class="font-bold">인사/노무 기반 정비</p><p class="text-xs text-slate-500">근로계약서, 취업규칙 정비 및 합법적 비과세 수당 최적화 설계</p></div></div>
-                    <div class="flex gap-6 items-start"><div class="bg-blue-600 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월~{m2:02d}월</div><div><p class="font-bold">핵심 기업인증 획득 (3개월 집중)</p><p class="text-xs text-slate-500">메인/이노비즈, ISO, 특허 등 필수 인증 신청 및 현장 실사 완벽 대비</p></div></div>
-                    <div class="flex gap-6 items-start"><div class="bg-emerald-600 text-white px-3 py-1 rounded font-bold text-sm">{m3:02d}월~{m4:02d}월</div><div><p class="font-bold">법인 전환 및 재무 결산 관리</p><p class="text-xs text-slate-500">절세 시뮬레이션 기반 법인 전환 여부 결정 및 가결산 보수 적정성 조정</p></div></div>
+                    <div class="flex gap-6 items-start"><div class="bg-blue-600 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월~{m2:02d}월</div><div><p class="font-bold">핵심 기업인증 획득 (3개월 집중)</p><p class="text-xs text-slate-500">벤처/메인/이노비즈, ISO 등 필수 인증 신청 및 현장 실사 대비</p></div></div>
                 </div>
             </div>
         </div>
@@ -357,24 +331,44 @@ html_content = f"""
         }}
 
         function executePrint() {{
+            // 인쇄 전 그래프 캔버스를 이미지로 변환하여 보존
+            const canvas = document.getElementById('taxChart');
+            if (canvas) {{
+                const img = document.getElementById('chartImage');
+                img.src = canvas.toDataURL('image/png');
+            }}
+            
             document.body.classList.add('force-print-mode');
-            setTimeout(() => {{ window.print(); setTimeout(() => document.body.classList.remove('force-print-mode'), 500); }}, 200);
+            setTimeout(() => {{ 
+                window.print(); 
+                setTimeout(() => document.body.classList.remove('force-print-mode'), 500); 
+            }}, 500);
         }}
 
         {f'''
-        const ctx = document.getElementById('taxChart').getContext('2d');
-        new Chart(ctx, {{
-            type: 'bar',
-            data: {{
-                labels: ['개인사업 유지', '법인 전환 통합'],
-                datasets: [{{
-                    data: [{personal_total_cost}, {corp_total_cost}],
-                    backgroundColor: ['#ef4444', '#3b82f6'],
-                    borderRadius: 8
-                }}]
-            }},
-            options: {{ responsive: true, plugins: {{ legend: {{ display: false }} }} }}
-        }});
+        let myChart;
+        function renderChart() {{
+            const ctx = document.getElementById('taxChart').getContext('2d');
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx, {{
+                type: 'bar',
+                data: {{
+                    labels: ['개인사업 유지', '법인 전환 통합'],
+                    datasets: [{{
+                        data: [{personal_total_cost}, {corp_total_cost}],
+                        backgroundColor: ['#ef4444', '#3b82f6'],
+                        borderRadius: 8
+                    }}]
+                }},
+                options: {{ 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    animation: false, // 인쇄를 위해 애니메이션 끔
+                    plugins: {{ legend: {{ display: false }} }} 
+                }}
+            }});
+        }}
+        renderChart();
         ''' if show_corp_tab else ""}
     </script>
 </body>
