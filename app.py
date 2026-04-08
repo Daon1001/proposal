@@ -208,7 +208,7 @@ html_content = f"""
             body.force-print-mode #tab_proposal {{ page-break-before: avoid; break-before: auto; }}
             
             /* 박스가 중간에 잘리는 현상 방지 */
-            .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-red-50, .cert-card {{
+            .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-blue-50, .bg-red-50, .bg-purple-50, .cert-card {{
                 page-break-inside: avoid;
                 break-inside: avoid;
             }}
@@ -523,13 +523,14 @@ html_content = f"""
                 </div>
             </div>
 
-            <!-- 3. 고정 자금 종류 및 금리 현황 (신규 자금 포함) -->
+            <!-- 3. 고정 자금 종류 및 금리 현황 (색상 통일 완료) -->
             <div class="print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-emerald-500">🏦 기관별 정책/보증 자금 및 바우처 지원</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     
+                    <!-- 초록색: 중기부 / 중진공 계열 -->
                     <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
-                        <h3 class="font-bold text-emerald-800 mb-2">1. 중소벤처기업진흥공단</h3>
+                        <h3 class="font-bold text-emerald-800 mb-2">1. 중소벤처기업진흥공단 (융자)</h3>
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 2.5% ~ 3.5% 내외</p>
                         <ul class="text-xs text-emerald-700 space-y-1 break-keep">
                             <li>• <b>성격:</b> 직접 대출 (정책자금 기준금리 적용)</li>
@@ -538,38 +539,40 @@ html_content = f"""
                     </div>
 
                     <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
-                        <h3 class="font-bold text-emerald-800 mb-2">2. 신용/기술보증기금 (신보/기보)</h3>
-                        <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 4.0% ~ 5.5% + 보증료</p>
+                        <h3 class="font-bold text-emerald-800 mb-2">2. 혁신성장바우처 (지원금)</h3>
+                        <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">최대 5,000만 원 (바우처 지급)</p>
                         <ul class="text-xs text-emerald-700 space-y-1 break-keep">
-                            <li>• <b>성격:</b> 보증서 발급 1금융권 연계 대출</li>
-                            <li>• <b>특징:</b> 담보 부족 시 신용도/기술 등급 평가로 대출 보증</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
-                        <h3 class="font-bold text-emerald-800 mb-2">3. 일반 시중 은행</h3>
-                        <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 4.5% ~ 6.5% 내외</p>
-                        <ul class="text-xs text-emerald-700 space-y-1 break-keep">
-                            <li>• <b>성격:</b> 자체 신용 및 담보 대출</li>
-                            <li>• <b>특징:</b> 재무제표 양호 시 신속한 자체 한도 산출 가능</li>
-                        </ul>
-                    </div>
-
-                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
-                        <h3 class="font-bold text-blue-800 mb-2">4. 혁신성장바우처</h3>
-                        <p class="text-sm text-blue-700 font-bold mb-2 pb-2 border-b border-blue-200">최대 5,000만 원 (바우처 지급)</p>
-                        <ul class="text-xs text-blue-800 space-y-1 break-keep">
                             <li>• <b>성격:</b> 중소기업 혁신바우처 사업 (정부 무상지원 성격)</li>
                             <li>• <b>특징:</b> 컨설팅, 기술지원, 마케팅 등 맞춤형 패키지 서비스 제공</li>
                         </ul>
                     </div>
 
+                    <!-- 파란색: 보증기관 / 금융권 -->
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
+                        <h3 class="font-bold text-blue-800 mb-2">3. 신용/기술보증기금 (보증)</h3>
+                        <p class="text-sm text-blue-700 font-bold mb-2 pb-2 border-b border-blue-200">예상: 연 4.0% ~ 5.5% + 보증료</p>
+                        <ul class="text-xs text-blue-800 space-y-1 break-keep">
+                            <li>• <b>성격:</b> 보증서 발급 1금융권 연계 대출</li>
+                            <li>• <b>특징:</b> 담보 부족 시 신용도/기술 등급 평가로 대출 보증</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
+                        <h3 class="font-bold text-blue-800 mb-2">4. 일반 시중 은행 (대출)</h3>
+                        <p class="text-sm text-blue-700 font-bold mb-2 pb-2 border-b border-blue-200">예상: 연 4.5% ~ 6.5% 내외</p>
+                        <ul class="text-xs text-blue-800 space-y-1 break-keep">
+                            <li>• <b>성격:</b> 자체 신용 및 담보 대출</li>
+                            <li>• <b>특징:</b> 재무제표 양호 시 신속한 자체 한도 산출 가능</li>
+                        </ul>
+                    </div>
+
+                    <!-- 빨간색: 안전보건공단 계열 -->
                     <div class="bg-red-50 p-5 rounded-xl border border-red-100 shadow-sm">
-                        <h3 class="font-bold text-red-800 mb-2">5. 안전동행지원사업</h3>
+                        <h3 class="font-bold text-red-800 mb-2">5. 안전동행지원사업 (보조금)</h3>
                         <p class="text-sm text-red-700 font-bold mb-2 pb-2 border-b border-red-200">최대 1억 원 지원 (매칭 50%)</p>
                         <ul class="text-xs text-red-800 space-y-1 break-keep">
                             <li>• <b>성격:</b> 50인 미만 중소/고위험 사업장 대상 공단 지원</li>
-                            <li>• <b>특징:</b> 노후/위험 공정 개선 및 중대재해예방 설비 교체 비용 지원</li>
+                            <li>• <b>특징:</b> 노후/위험 공정 개선 및 중대재해예방 설비 교체 지원</li>
                         </ul>
                     </div>
 
@@ -582,15 +585,16 @@ html_content = f"""
                         </ul>
                     </div>
 
-                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm lg:col-span-3">
-                        <h3 class="font-bold text-emerald-800 mb-2">7. 지자체 정책자금 (도 자금 / 시 자금 이차보전)</h3>
-                        <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">실질 체감 금리: 연 1.5% ~ 3.5% 수준</p>
+                    <!-- 보라색: 지자체 -->
+                    <div class="bg-purple-50 p-5 rounded-xl border border-purple-100 shadow-sm lg:col-span-3">
+                        <h3 class="font-bold text-purple-800 mb-2">7. 지자체 정책자금 (이차보전)</h3>
+                        <p class="text-sm text-purple-700 font-bold mb-2 pb-2 border-b border-purple-200">실질 체감 금리: 연 1.5% ~ 3.5% 수준</p>
                         <div class="flex flex-col md:flex-row gap-4 mt-2">
-                            <ul class="text-xs text-emerald-700 space-y-1 break-keep flex-1">
+                            <ul class="text-xs text-purple-800 space-y-1 break-keep flex-1">
                                 <li>• <b>성격:</b> 시중 은행 대출 시 발생되는 이자의 일부를 지자체에서 지원(이차보전)</li>
                                 <li>• <b>지원율:</b> 통상 은행 대출 금리에서 1.0% ~ 3.0%를 도/시에서 대신 납부</li>
                             </ul>
-                            <ul class="text-xs text-emerald-700 space-y-1 break-keep flex-1">
+                            <ul class="text-xs text-purple-800 space-y-1 break-keep flex-1">
                                 <li>• <b>경기도 자금:</b> 경기도 중소기업 육성자금 (시설/운전 자금 지원)</li>
                                 <li>• <b>시 자금:</b> 시흥시 등 관내 중소기업 육성자금 (지자체 예산 소진 전 조기 신청 필수)</li>
                             </ul>
@@ -619,7 +623,7 @@ html_content = f"""
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-bold mb-2">{m2:02d}월 ~ {m3:02d}월</span>
                         <h3 class="text-lg font-bold text-slate-800">인증 획득 프로세스 가동</h3>
-                        <p class="text-slate-600 text-sm mt-1">연구전담부서 설립 신청, 뿌리기업/소부장 사전 점검 및 신청, 여성/벤처기업 신청 및 현장 준비</p>
+                        <p class="text-slate-600 text-sm mt-1">연구전담부서 설립 신청, 뿌리기업/소부장 사전 점검 및 신청, 여성/벤처/메인/이노비즈 및 ISO, 특허 신청 진행</p>
                     </div>
                     <!-- Phase 3 -->
                     <div class="relative pl-8">
@@ -633,7 +637,7 @@ html_content = f"""
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm font-bold mb-2">{m4:02d}월 이후 지속</span>
                         <h3 class="text-lg font-bold text-slate-800">자금 매칭 및 사후 관리</h3>
-                        <p class="text-slate-600 text-sm mt-1">완성된 인증 및 재무제표를 바탕으로 중진공 및 은행 자금 검토, 고용지원금 지속 관리 및 직접생산/공장등록 사후점검</p>
+                        <p class="text-slate-600 text-sm mt-1">완성된 인증 및 재무제표를 바탕으로 중진공/신보/은행 자금 검토, 고용지원금 지속 관리 및 안전공단 사업 점검</p>
                     </div>
                 </div>
             </div>
