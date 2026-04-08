@@ -245,7 +245,7 @@ html_content = f"""
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">실질 체감 금리: 연 1.5% ~ 3.5% 수준</p>
                         <div class="flex flex-col md:flex-row gap-4 mt-2">
                             <p class="text-xs text-emerald-700 flex-1">• 시중 은행 대출 시 이자의 1.0%~3.0%를 지자체에서 대납</p>
-                            <p class="text-xs text-emerald-700 flex-1 font-bold">• 경기도 육성자금 및 시흥시 관내 전용 자금 (조기 신청 필수)</p>
+                            <p class="text-xs text-emerald-700 flex-1 font-bold">• 도 육성자금 및  관내 전용 자금 (조기 신청 필수)</p>
                         </div>
                     </div>
                 </div>
