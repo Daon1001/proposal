@@ -40,11 +40,11 @@ with col1:
     # 스케쥴표 시작 월 설정
     start_month = st.number_input("스케쥴 시작 월 (숫자만 입력)", min_value=1, max_value=12, value=4)
     
-    # 스케쥴 달 계산 (인증 기간을 3개월로 연장, 12월이 넘어가면 1월로 순환)
+    # 스케쥴 달 계산 (12월이 넘어가면 1월로 순환)
     m1 = start_month
-    m2 = (start_month % 12) + 1                 # 인사/노무: 1개월 소요
-    m3 = (start_month + 3) % 12 + 1             # 인증 획득: 3개월 소요
-    m4 = (start_month + 4) % 12 + 1             # 재무/세무: 1개월 소요
+    m2 = (start_month % 12) + 1
+    m3 = (start_month + 1) % 12 + 1
+    m4 = (start_month + 2) % 12 + 1
 
     st.subheader("📝 3. 고용지원금 자동 계산기 (6대 핵심 지원금)")
     st.write(f"현재 근로자 수({current_employees}명)를 기준으로 수령 가능 여부와 금액이 계산됩니다.")
@@ -208,7 +208,7 @@ html_content = f"""
             body.force-print-mode #tab_proposal {{ page-break-before: avoid; break-before: auto; }}
             
             /* 박스가 중간에 잘리는 현상 방지 */
-            .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-red-50 {{
+            .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-red-50, .cert-card {{
                 page-break-inside: avoid;
                 break-inside: avoid;
             }}
@@ -230,7 +230,7 @@ html_content = f"""
             </div>
             <div class="mt-4 md:mt-0 text-right flex flex-col items-end">
                 <!-- 🖨️ 전용 인쇄 버튼 추가 -->
-                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded shadow transition-colors flex items-center">
+                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded shadow transition-colors flex items-center cursor-pointer">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     전체 내용 인쇄하기
                 </button>
@@ -395,61 +395,82 @@ html_content = f"""
                 </div>
             </div>
 
-            <!-- 2. 고정 인증 항목 (추가 인증 포함) -->
+            <!-- 2. 클릭형 인터랙티브 인증 항목 -->
             <div class="mb-10 print-break-inside-avoid">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-blue-500">🏆 기업 핵심 인증별 혜택</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-2 pl-2 border-l-4 border-blue-500">🏆 기업 핵심 인증별 혜택</h2>
+                <p class="text-sm text-slate-500 mb-4 pl-3">💡 블록을 클릭하여 해당 기업이 받을 수 있는 <b>[진행 대상]</b> 인증을 시각적으로 강조해 보세요.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- 기존 4개 -->
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-blue-700 mb-2">기업부설연구소 / 전담부서</h3>
+                    
+                    <!-- 인증 1 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">기업부설연구소 / 전담부서</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 연구원 인당 급여의 25% 법인세 세액공제</li>
                             <li>• 연구원 인당 급여 중 월 20만원 비과세 처리</li>
                         </ul>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-blue-700 mb-2">벤처기업 인증</h3>
+
+                    <!-- 인증 2 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">벤처기업 인증</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 창업 3년 미만 시 5년간 법인세 50% 감면</li>
                             <li>• 부동산(공장 등) 취등록세 75% 감면 혜택</li>
                         </ul>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-blue-700 mb-2">소재·부품·장비 (소부장) 인증</h3>
+
+                    <!-- 인증 3 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">소재·부품·장비 (소부장) 인증</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 한국은행 금융중개지원 대출 및 지원금 우대</li>
                             <li>• 병역특례 및 외국인 고용 가점 부여</li>
                         </ul>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-blue-700 mb-2">뿌리기업 인증</h3>
+
+                    <!-- 인증 4 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">뿌리기업 인증</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 정책자금 대출 실행 시 이자율 인하 및 한도 상향</li>
                             <li>• 외국인 채용 제한 완화 및 전용 지원금 신청 가능</li>
                         </ul>
                     </div>
-                    <!-- 신규 추가 3개 -->
-                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
-                        <h3 class="font-bold text-blue-800 mb-2">여성기업 인증</h3>
-                        <ul class="text-sm text-blue-900 space-y-1">
+
+                    <!-- 인증 5 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">여성기업 인증</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 공공기관 수의계약 한도 5천만 원으로 확대</li>
                             <li>• 공공기관 의무구매 대상 및 입찰 가점 부여 혜택</li>
                         </ul>
                     </div>
-                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
-                        <h3 class="font-bold text-blue-800 mb-2">직접생산확인서</h3>
-                        <ul class="text-sm text-blue-900 space-y-1">
+
+                    <!-- 인증 6 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">직접생산확인서</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 조달청(나라장터) 및 공공기관 입찰 참여 필수 요건</li>
                             <li>• 중소기업간 경쟁제품 지정 시 공공 조달시장 진입 가능</li>
                         </ul>
                     </div>
-                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm md:col-span-2 lg:col-span-1">
-                        <h3 class="font-bold text-blue-800 mb-2">공장등록</h3>
-                        <ul class="text-sm text-blue-900 space-y-1">
+
+                    <!-- 인증 7 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative md:col-span-2 lg:col-span-1">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">공장등록</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 정부 주요 지원사업 및 융자 신청 시 필수 기본 요건</li>
                             <li>• 제조업 기반 각종 세제 혜택 및 전력 요금 감면 적용</li>
                         </ul>
                     </div>
+
                 </div>
             </div>
 
@@ -545,7 +566,7 @@ html_content = f"""
     </main>
 
     <script>
-        // 1. 날짜 자동 출력 스크립트 (엑셀 TODAY 함수 기능)
+        // 1. 날짜 자동 출력 스크립트
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -567,16 +588,32 @@ html_content = f"""
             document.getElementById(tabId).classList.add('active');
         }}
 
-        // 3. 강제 인쇄 실행 스크립트 (모든 탭을 강제로 열고 인쇄)
-        function executePrint() {{
-            // body에 강제 인쇄용 클래스 추가
-            document.body.classList.add('force-print-mode');
+        // 3. 인증 카드 클릭 하이라이트 토글 스크립트
+        function toggleCert(el) {{
+            // 테두리 및 배경 토글
+            el.classList.toggle('border-blue-500');
+            el.classList.toggle('ring-2');
+            el.classList.toggle('ring-blue-500');
+            el.classList.toggle('bg-blue-50');
+            el.classList.toggle('bg-white');
             
-            // 약간의 딜레이를 주어 화면 렌더링 후 인쇄 다이얼로그 호출
+            // 배지 토글
+            const badge = el.querySelector('.cert-badge');
+            if (badge) badge.classList.toggle('hidden');
+            
+            // 텍스트 색상 토글
+            const title = el.querySelector('.cert-title');
+            if (title) {{
+                title.classList.toggle('text-slate-700');
+                title.classList.toggle('text-blue-800');
+            }}
+        }}
+
+        // 4. 강제 인쇄 실행 스크립트 (모든 탭을 강제로 열고 인쇄)
+        function executePrint() {{
+            document.body.classList.add('force-print-mode');
             setTimeout(() => {{
                 window.print();
-                
-                // 인쇄 다이얼로그가 닫히면 강제 인쇄용 클래스 제거
                 setTimeout(() => {{
                     document.body.classList.remove('force-print-mode');
                 }}, 500);
