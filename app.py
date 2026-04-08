@@ -42,9 +42,6 @@ with col1:
         women_count = st.number_input("③ 새일여성", min_value=0, value=1)
         parental_count = st.number_input("⑥ 대체인력", min_value=0, value=0)
 
-    # ---------------------------------------------------------
-    # [중요] 지원금 카드 변수 생성 로직 (NameError 방지)
-    # ---------------------------------------------------------
     def generate_subsidy_card(title, target, eligible, max_amount_str, scheduled_count, total_amount):
         if eligible:
             return f"""
@@ -97,7 +94,7 @@ with col1:
     monthly_wage = min_wage * 209
 
 # ----------------------------------------------------------------------------------
-# HTML 소스코드 (인쇄 시 그래프 보존 로직 추가)
+# HTML 소스코드 (인쇄 최적화 및 그래프 고정 로직)
 # ----------------------------------------------------------------------------------
 html_content = f"""
 <!DOCTYPE html>
@@ -116,7 +113,6 @@ html_content = f"""
         .check-list li::before {{ content: '✔'; color: #0ea5e9; margin-right: 8px; font-weight: bold; }}
         .danger-list li::before {{ content: '⚠️'; margin-right: 8px; font-weight: bold; }}
         
-        /* 인쇄 전용 스타일 */
         @media print {{
             @page {{ size: A4 landscape; margin: 10mm; }}
             body {{ background-color: #ffffff !important; }}
@@ -126,18 +122,16 @@ html_content = f"""
                 display: block !important; 
                 opacity: 1 !important; 
                 page-break-after: always !important; 
-                margin-top: 0 !important;
                 padding-top: 10px !important;
             }}
             #tab_proposal {{ page-break-before: avoid !important; }}
             .print-break-inside-avoid {{ page-break-inside: avoid; break-inside: avoid; }}
             .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
-            
-            /* 인쇄 시 그래프 캔버스를 숨기고 이미지를 보여줌 */
+            /* 인쇄 시 그래프 캔버스를 이미지로 교체 */
             #taxChart {{ display: none !important; }}
-            #chartImage {{ display: block !important; width: 100% !important; }}
+            #chartPrintImage {{ display: block !important; width: 100% !important; }}
         }}
-        #chartImage {{ display: none; }}
+        #chartPrintImage {{ display: none; }}
     </style>
 </head>
 <body class="antialiased">
@@ -145,12 +139,12 @@ html_content = f"""
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at top right, #3b82f6, transparent);"></div>
         <div class="max-w-5xl mx-auto relative z-10 flex justify-between items-end">
             <div>
-                <p class="text-amber-400 font-bold tracking-widest text-sm mb-1">MASTER CONSULTING PLAN</p>
+                <p class="text-amber-400 font-bold tracking-widest text-sm mb-1 uppercase">Master Consulting Plan</p>
                 <h1 class="text-3xl font-bold mb-2 leading-tight">{client_name} <br><span class="text-gradient">맞춤형 경영제안서</span></h1>
                 <p class="text-slate-400 text-xs">업종코드: {industry_code} / 상시근로자: {current_employees}명</p>
             </div>
             <div class="text-right flex flex-col items-end">
-                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded shadow transition-all cursor-pointer">🖨️ 전체 내용 인쇄하기</button>
+                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded shadow transition-all cursor-pointer">🖨️ 가로형 전체 인쇄하기</button>
                 <p class="text-slate-400 text-xs">제안일자: <span id="auto_date"></span></p>
                 <p class="text-lg font-bold mt-1">{my_company_name}</p>
             </div>
@@ -161,7 +155,7 @@ html_content = f"""
         <div class="max-w-5xl mx-auto px-6 flex space-x-6 text-sm">
             <button onclick="switchTab('tab_proposal', this)" class="tab-btn py-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">핵심 제안</button>
             <button onclick="switchTab('tab_labor', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">노무/비과세 상세</button>
-            {'<button onclick="switchTab(\'tab_corp\', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">법인 전환 검토</button>' if show_corp_tab else ''}
+            {'<button id="btn_corp" onclick="switchTab(\'tab_corp\', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">법인 전환 검토</button>' if show_corp_tab else ''}
             <button onclick="switchTab('tab_fixed', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">인증/지원금 상세</button>
             <button onclick="switchTab('tab_fund', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">기관별 자금 상세</button>
             <button onclick="switchTab('tab_schedule', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">마스터 스케쥴</button>
@@ -185,15 +179,13 @@ html_content = f"""
                         <span>월 환산액 (월 209시간 기준)</span>
                         <span>{monthly_wage:,}원</span>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-4 break-keep">※ 최저임금 위반 시 3년 이하 징역 또는 2천만원 이하 벌금이 부과되며, 별도의 시정지시 없이 즉시 처벌될 수 있습니다.</p>
                 </div>
                 <div class="bg-red-50 rounded-2xl border border-red-100 p-6 text-red-800 font-medium">
-                    <h2 class="text-lg font-bold mb-2">🚨 근로계약서의 중요성 (사업주 관점)</h2>
-                    <p class="text-xs mb-3">근로계약서는 사업주를 보호하는 유일한 입증 서류입니다.</p>
+                    <h2 class="text-lg font-bold mb-2">🚨 근로계약서 미작성 리스크</h2>
                     <ul class="text-xs space-y-2 danger-list">
-                        <li><b>형사처벌 리스크:</b> 정규직 미작성 시 벌금 최대 500만 원 (전과 기록)</li>
-                        <li><b>즉시 부과 리스크:</b> 단시간/기간제 미작성 시 <b>과태료 500만 원 즉시 부과</b></li>
-                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서가 없으면 사업주가 100% 불리한 책임을 지게 됩니다.</li>
+                        <li>형사처벌: 정규직 미작성 시 벌금 최대 500만 원</li>
+                        <li>즉시 부과: 단시간 미작성 시 과태료 500만 원 즉시 부과</li>
+                        <li>분쟁: 미작성 시 사업주 입증 책임 가중으로 100% 불리</li>
                     </ul>
                 </div>
             </div>
@@ -202,35 +194,30 @@ html_content = f"""
                 <h2 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-slate-800">🏢 5인 미만 vs 5인 이상 노무관리 핵심 차이</h2>
                 <table class="w-full text-[11px] text-left border-collapse border border-slate-200">
                     <thead class="bg-slate-100">
-                        <tr><th class="p-3 border">주요 법령</th><th class="p-3 border text-emerald-700">5인 미만 사업장</th><th class="p-3 border text-red-700">5인 이상 사업장 (리스크 관리 대상)</th></tr>
+                        <tr><th class="p-3 border">주요 법령</th><th class="p-3 border text-emerald-700">5인 미만 사업장</th><th class="p-3 border text-red-700">5인 이상 사업장</th></tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-slate-600">
-                        <tr><td class="p-3 border font-bold">가산수당 (연장/야간/휴일)</td><td class="p-3 border">지급 의무 없음 (1배)</td><td class="p-3 border font-bold text-red-600">통상임금의 50% 가산 지급 (1.5배)</td></tr>
-                        <tr><td class="p-3 border font-bold">연차유급휴가</td><td class="p-3 border">부여 의무 없음</td><td class="p-3 border font-bold text-red-600">법정 연차휴가 발생 (미사용 시 수당 정산)</td></tr>
-                        <tr><td class="p-3 border font-bold">부당해고 구제신청</td><td class="p-3 border">적용 제외 (해고 비교적 자유)</td><td class="p-3 border font-bold text-red-600">노동위 구제신청 가능 (정당한 사유/절차 필수)</td></tr>
-                        <tr><td class="p-3 border font-bold">주 52시간제</td><td class="p-3 border">미적용</td><td class="p-3 border font-bold text-red-600">주당 최대 52시간 이내 근로 준수 의무</td></tr>
+                        <tr><td class="p-3 border font-bold">가산수당</td><td class="p-3 border">의무 없음</td><td class="p-3 border font-bold text-red-600">통상임금의 50% 가산 지급</td></tr>
+                        <tr><td class="p-3 border font-bold">연차유급휴가</td><td class="p-3 border">의무 없음</td><td class="p-3 border font-bold text-red-600">법정 연차 발생</td></tr>
+                        <tr><td class="p-3 border font-bold">부당해고 구제신청</td><td class="p-3 border">적용 제외</td><td class="p-3 border font-bold text-red-600">노동위 구제신청 가능</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <div class="bg-emerald-50 rounded-2xl border border-emerald-100 p-6 print-break-inside-avoid">
-                <h2 class="text-lg font-bold text-emerald-800 mb-4 border-b border-emerald-200 pb-2">💎 4대보험 비과세 항목 (합법적 소득 설계)</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <h2 class="text-lg font-bold text-emerald-800 mb-4 border-b border-emerald-200 pb-2">💎 4대보험 비과세 항목 (합법적 절세)</h2>
+                <div class="grid grid-cols-4 gap-4">
                     <div class="bg-white p-4 rounded shadow-sm text-center">
-                        <p class="text-[11px] font-bold mb-1">🍚 식대 (중식대)</p>
-                        <p class="text-sm text-emerald-600 font-bold">월 20만원</p>
+                        <p class="text-[10px] font-bold mb-1">식대</p><p class="text-sm text-emerald-600 font-bold">월 20만원</p>
                     </div>
                     <div class="bg-white p-4 rounded shadow-sm text-center">
-                        <p class="text-[11px] font-bold mb-1">🚗 자가운전보조금</p>
-                        <p class="text-sm text-emerald-600 font-bold">월 20만원</p>
+                        <p class="text-[10px] font-bold mb-1">자가운전</p><p class="text-sm text-emerald-600 font-bold">월 20만원</p>
                     </div>
                     <div class="bg-white p-4 rounded shadow-sm text-center">
-                        <p class="text-[11px] font-bold mb-1">👶 출산보육수당</p>
-                        <p class="text-sm text-emerald-600 font-bold">월 20만원</p>
+                        <p class="text-[10px] font-bold mb-1">보육수당</p><p class="text-sm text-emerald-600 font-bold">월 20만원</p>
                     </div>
                     <div class="bg-white p-4 rounded shadow-sm text-center">
-                        <p class="text-[11px] font-bold mb-1">🔬 연구보조비 (연구소)</p>
-                        <p class="text-sm text-emerald-600 font-bold">월 20만원</p>
+                        <p class="text-[10px] font-bold mb-1">연구보조</p><p class="text-sm text-emerald-600 font-bold">월 20만원</p>
                     </div>
                 </div>
             </div>
@@ -249,54 +236,39 @@ html_content = f"""
                             <p class="text-xs font-bold text-blue-800">법인 전환 시 (법인세 + 근로세 + 직장보험)</p>
                             <p class="text-3xl font-bold text-blue-600">{corp_total_cost:,.0f}만 원</p>
                         </div>
-                        <div class="bg-emerald-100 p-5 rounded-xl text-center">
-                            <p class="text-lg font-bold">💡 법인 전환 시, 연간 약 <span class="text-2xl text-emerald-700">{max(0, tax_diff):,.0f}만 원</span> 절세 기대</p>
+                        <div class="bg-emerald-100 p-5 rounded-xl text-center shadow-inner">
+                            <p class="text-lg font-bold">💡 예상 절세액: {max(0, tax_diff):,.0f}만 원</p>
                         </div>
                     </div>
                     <div class="h-64 flex justify-center border rounded-xl bg-slate-50 p-2 relative">
                         <canvas id="taxChart"></canvas>
-                        <img id="chartImage" />
+                        <img id="chartPrintImage" />
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="tab_fixed" class="tab-content print-active">
-            <h2 class="text-xl font-bold mb-4 border-l-4 border-amber-500 pl-2">💰 고용지원금 시뮬레이션 (총 {total_subsidy:,}만원 확보 예상)</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">{card_youth}{card_senior}{card_women}{card_continuous}{card_disabled}{card_parental}</div>
-            
-            <h2 class="text-xl font-bold mb-4 border-l-4 border-blue-500 pl-2">🏆 기업 핵심 인증 리스트 (클릭 선택 가능)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
-                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">여성기업인증</h3><p class="text-[10px] text-slate-500">• 수의계약 5천만원 한도 확대 / 입찰 가점</p>
-                </div>
-                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
-                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">직접생산확인서 / 공장등록</h3><p class="text-[10px] text-slate-500">• 공공조달 필수 / 제조업 세제 혜택</p>
-                </div>
-                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
-                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">ISO 9001/14001/45001</h3><p class="text-[10px] text-slate-500">• 품질/환경/안전 통합 / 대기업 필수요건</p>
-                </div>
-            </div>
+            <h2 class="text-xl font-bold mb-4 border-l-4 border-amber-500 pl-2">💰 고용지원금 시뮬레이션 (총 {total_subsidy:,}만원 예상)</h2>
+            <div class="grid grid-cols-3 gap-3 mb-10">{card_youth}{card_senior}{card_women}{card_continuous}{card_disabled}{card_parental}</div>
         </div>
 
         <div id="tab_fund" class="tab-content print-active">
-            <h2 class="text-xl font-bold mb-6 border-l-4 border-emerald-500 pl-2">🏦 기관별 정책자금 및 지원사업 상세 가이드</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-200 print-break-inside-avoid shadow-sm">
+            <h2 class="text-xl font-bold mb-6 border-l-4 border-emerald-500 pl-2">🏦 기관별 정책자금 및 지원사업 상세</h2>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-200">
                     <h3 class="font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-2">🟢 1. 중소벤처기업진흥공단 및 바우처</h3>
                     <ul class="text-xs space-y-2 text-emerald-700">
-                        <li>• <b>[중진공 직접융자]</b> 고정금리 연 2.5~3.5%, 운전 5억/시설 60억 한도</li>
-                        <li>• <b>[혁신바우처]</b> 최대 5,000만원 무상 (시제품제작, 마케팅, 컨설팅 지원)</li>
+                        <li>• 융자: 고정금리 2.5~3.5%, 운전 5억/시설 60억 한도</li>
+                        <li>• 혁신바우처: 최대 5,000만원 무상 (시제품, 마케팅 지원)</li>
+                        <li>• 수출바우처: 해외 진출 지원 최대 1억원 (90% 지원)</li>
                     </ul>
                 </div>
-                <div class="bg-red-50 p-6 rounded-2xl border border-red-100 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 2. 안전보건공단 지원 (보조금/융자)</h3>
+                <div class="bg-red-50 p-6 rounded-2xl border border-red-200">
+                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 2. 안전보건공단 지원사업</h3>
                     <ul class="text-xs space-y-2 text-red-700">
-                        <li>• <b>[안전동행지원]</b> 고위험 설비 교체 시 <b>최대 1억 무상지원</b> (50% 자부담)</li>
-                        <li>• <b>[산업재해예방융자]</b> 안전 설비 도입 시 <b>연 1.5% 고정금리</b> (최대 10억)</li>
+                        <li>• 안전동행지원: 설비 교체 보조금 최대 1억 (50% 매칭)</li>
+                        <li>• 산재예방융자: <b>연 1.5% 고정금리</b> (최대 10억)</li>
                     </ul>
                 </div>
             </div>
@@ -304,10 +276,11 @@ html_content = f"""
 
         <div id="tab_schedule" class="tab-content print-active">
             <div class="bg-white rounded-2xl border p-8 print-break-inside-avoid">
-                <h2 class="text-2xl font-bold mb-6 pb-4 border-b">📅 컨설팅 마스터 로드맵</h2>
+                <h2 class="text-2xl font-bold mb-6 pb-4 border-b">📅 J-ONE 2026 컨설팅 로드맵</h2>
                 <div class="space-y-8">
-                    <div class="flex gap-6 items-start"><div class="bg-slate-800 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월</div><div><p class="font-bold">인사/노무 기반 정비</p><p class="text-xs text-slate-500">근로계약서, 취업규칙 정비 및 합법적 비과세 수당 최적화 설계</p></div></div>
-                    <div class="flex gap-6 items-start"><div class="bg-blue-600 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월~{m2:02d}월</div><div><p class="font-bold">핵심 기업인증 획득 (3개월 집중)</p><p class="text-xs text-slate-500">벤처/메인/이노비즈, ISO 등 필수 인증 신청 및 현장 실사 대비</p></div></div>
+                    <div class="flex gap-6 items-start"><div class="bg-slate-800 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월</div><div><p class="font-bold">인사/노무 기반 정비 및 비과세 최적화</p></div></div>
+                    <div class="flex gap-6 items-start"><div class="bg-blue-600 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}~{m3:02d}월</div><div><p class="font-bold">핵심 기업인증(벤처, ISO, 메인비즈) 확보</p></div></div>
+                    <div class="flex gap-6 items-start"><div class="bg-emerald-600 text-white px-3 py-1 rounded font-bold text-sm">{m3:02d}~{m4:02d}월</div><div><p class="font-bold">법인전환 및 기관 자금 매칭 실행</p></div></div>
                 </div>
             </div>
         </div>
@@ -317,37 +290,8 @@ html_content = f"""
         const now = new Date();
         document.getElementById('auto_date').innerText = now.getFullYear() + '년 ' + (now.getMonth()+1) + '월 ' + now.getDate() + '일';
 
-        function switchTab(tabId, element) {{
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('text-blue-600', 'border-blue-600', 'font-bold'));
-            element.classList.add('text-blue-600', 'border-blue-600', 'font-bold');
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-        }}
-
-        function toggleCert(el) {{
-            el.classList.toggle('border-blue-500'); el.classList.toggle('ring-2'); el.classList.toggle('ring-blue-500');
-            el.classList.toggle('bg-blue-50');
-            const badge = el.querySelector('.cert-badge'); if (badge) badge.classList.toggle('hidden');
-        }}
-
-        function executePrint() {{
-            // 인쇄 전 그래프 캔버스를 이미지로 변환하여 보존
-            const canvas = document.getElementById('taxChart');
-            if (canvas) {{
-                const img = document.getElementById('chartImage');
-                img.src = canvas.toDataURL('image/png');
-            }}
-            
-            document.body.classList.add('force-print-mode');
-            setTimeout(() => {{ 
-                window.print(); 
-                setTimeout(() => document.body.classList.remove('force-print-mode'), 500); 
-            }}, 500);
-        }}
-
-        {f'''
         let myChart;
-        function renderChart() {{
+        function renderTaxChart() {{
             const ctx = document.getElementById('taxChart').getContext('2d');
             if (myChart) myChart.destroy();
             myChart = new Chart(ctx, {{
@@ -362,14 +306,35 @@ html_content = f"""
                 }},
                 options: {{ 
                     responsive: true, 
-                    maintainAspectRatio: false,
-                    animation: false, // 인쇄를 위해 애니메이션 끔
+                    maintainAspectRatio: false, 
+                    animation: false,
                     plugins: {{ legend: {{ display: false }} }} 
                 }}
             }});
         }}
-        renderChart();
-        ''' if show_corp_tab else ""}
+
+        function switchTab(tabId, element) {{
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('text-blue-600', 'border-blue-600', 'font-bold'));
+            element.classList.add('text-blue-600', 'border-blue-600', 'font-bold');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            // 법인 탭으로 이동할 때 그래프를 다시 그림
+            if (tabId === 'tab_corp') setTimeout(renderTaxChart, 100);
+        }}
+
+        function executePrint() {{
+            // 인쇄 전 그래프 캔버스를 이미지로 변환하여 고정
+            const canvas = document.getElementById('taxChart');
+            if (canvas) {{
+                const img = document.getElementById('chartPrintImage');
+                img.src = canvas.toDataURL('image/png');
+            }}
+            document.body.classList.add('force-print-mode');
+            setTimeout(() => {{ window.print(); setTimeout(() => document.body.classList.remove('force-print-mode'), 500); }}, 200);
+        }}
+
+        // 초기 그래프 로드
+        if (document.getElementById('taxChart')) setTimeout(renderTaxChart, 500);
     </script>
 </body>
 </html>
@@ -379,4 +344,4 @@ with col2:
     st.subheader(f"💻 {client_name} 제안서 미리보기")
     components.html(html_content, height=1000, scrolling=True)
     b64 = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-    st.markdown(f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 [ {client_name} ] 최종 제안서 파일 저장</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="data:text/html;base64,{b64}" download="{client_name}_제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px;">💾 제안서 파일 저장하기</a>', unsafe_allow_html=True)
