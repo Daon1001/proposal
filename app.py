@@ -64,40 +64,32 @@ with col1:
     # 지원금 요건 판단 및 로직 처리 (최신 규정)
     # ==========================================
     
-    # 1. 청년일자리도약장려금 (원칙: 5인 이상)
     youth_eligible = current_employees >= 5
     youth_subsidy_per_person = 1200 if youth_eligible else 0
     youth_total = youth_count * youth_subsidy_per_person
     
-    # 2. 시니어인턴십 (보통 1인 이상 가능)
     senior_eligible = current_employees >= 1
     senior_subsidy_per_person = 240 if senior_eligible else 0
     senior_total = senior_count * senior_subsidy_per_person
     
-    # 3. 새일여성인턴지원금 (1인 이상 가능 기본 세팅)
     women_eligible = current_employees >= 1
     women_subsidy_per_person = 380 if women_eligible else 0
     women_total = women_count * women_subsidy_per_person
 
-    # 4. 고령자 계속고용장려금 (정년제도 운영 기업, 월 30만 * 24개월 = 720만)
     continuous_eligible = current_employees >= 1
     continuous_subsidy_per_person = 720 if continuous_eligible else 0
     continuous_total = continuous_count * continuous_subsidy_per_person
 
-    # 5. 장애인 신규고용장려금 (경/중증, 성별 따라 상이하나 평균적 720만 산정)
     disabled_eligible = current_employees >= 1
     disabled_subsidy_per_person = 720 if disabled_eligible else 0
     disabled_total = disabled_count * disabled_subsidy_per_person
 
-    # 6. 육아휴직 대체인력 지원금 (최대 월 80만 * 12개월 = 960만)
     parental_eligible = current_employees >= 1
     parental_subsidy_per_person = 960 if parental_eligible else 0
     parental_total = parental_count * parental_subsidy_per_person
 
-    # 총액 계산
     total_subsidy = youth_total + senior_total + women_total + continuous_total + disabled_total + parental_total
 
-    # HTML 카드 생성 함수 (조건부 렌더링)
     def generate_subsidy_card(title, target, eligible, max_amount_str, scheduled_count, total_amount):
         if eligible:
             return f"""
@@ -122,7 +114,6 @@ with col1:
             </div>
             """
 
-    # 카드 생성
     card_youth = generate_subsidy_card("청년일자리도약장려금", "만 15~34세 청년", youth_eligible, "1인 최대 1,200만 원 (2년)", youth_count, youth_total)
     card_senior = generate_subsidy_card("시니어인턴십", "만 60세 이상 신규채용", senior_eligible, "1인 최대 약 240만 원", senior_count, senior_total)
     card_women = generate_subsidy_card("새일여성인턴지원금", "경력단절여성 등", women_eligible, "1인 최대 380만 원", women_count, women_total)
@@ -133,9 +124,40 @@ with col1:
     st.subheader("📝 4. 노무 기준 설정 (최저임금)")
     st.write("해당 연도의 최저시급을 입력하면 월 환산액(209시간 기준)이 자동 계산되어 반영됩니다.")
     min_wage = st.number_input("현재 최저시급 (원)", min_value=0, value=10030, step=10)
-    
-    # 209시간 기준 월 최저임금 자동 계산
     monthly_wage = min_wage * 209
+
+    st.subheader("📝 5. 법인 전환 세금 시뮬레이터")
+    st.write("예상 당기순이익을 입력하면, 개인사업자와 법인사업자 간의 세금 차이가 자동 분석됩니다.")
+    net_income = st.number_input("예상 당기순이익 (단위: 만원)", min_value=0, value=15000, step=1000)
+
+    # ==========================================
+    # 세금 계산 로직 (지방소득세 10% 포함 산출)
+    # ==========================================
+    def calc_personal_tax(income):
+        if income <= 1400: return income * 0.06
+        elif income <= 5000: return 84 + (income - 1400) * 0.15
+        elif income <= 8800: return 624 + (income - 5000) * 0.24
+        elif income <= 15000: return 1536 + (income - 8800) * 0.35
+        elif income <= 30000: return 3706 + (income - 15000) * 0.38
+        elif income <= 50000: return 9406 + (income - 30000) * 0.40
+        elif income <= 100000: return 17406 + (income - 50000) * 0.42
+        else: return 38406 + (income - 100000) * 0.45
+
+    def calc_corp_tax(income):
+        if income <= 20000: return income * 0.09
+        elif income <= 2000000: return 1800 + (income - 20000) * 0.19
+        elif income <= 30000000: return 378000 + (income - 2000000) * 0.21
+        else: return 6258000 + (income - 30000000) * 0.24
+
+    # 세액 계산 및 지방소득세(10%) 가산
+    personal_tax_total = calc_personal_tax(net_income) * 1.1 if net_income > 0 else 0
+    corp_tax_total = calc_corp_tax(net_income) * 1.1 if net_income > 0 else 0
+    
+    tax_diff = personal_tax_total - corp_tax_total if personal_tax_total > corp_tax_total else 0
+
+    personal_effective_rate = (personal_tax_total / net_income * 100) if net_income > 0 else 0
+    corp_effective_rate = (corp_tax_total / net_income * 100) if net_income > 0 else 0
+
 
 # HTML 템플릿에 변수 및 고정 데이터 결합
 html_content = f"""
@@ -146,6 +168,7 @@ html_content = f"""
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{client_name} 경영컨설팅 제안서</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {{
@@ -169,57 +192,42 @@ html_content = f"""
         }}
         ::-webkit-scrollbar {{ display: none; }} /* 스크롤바 숨김 */
         
-        .check-list li::before {{
-            content: '✔';
-            color: #0ea5e9;
-            margin-right: 8px;
-            font-weight: bold;
-        }}
-        .danger-list li::before {{
-            content: '⚠️';
-            margin-right: 8px;
-        }}
+        .check-list li::before {{ content: '✔'; color: #0ea5e9; margin-right: 8px; font-weight: bold; }}
+        .danger-list li::before {{ content: '⚠️'; margin-right: 8px; }}
 
-        /* ========================================= */
         /* 🖨️ 강제 인쇄 모드 제어 CSS (JS 연동) */
-        /* ========================================= */
         body.force-print-mode .tab-content {{ 
             display: block !important; 
             opacity: 1 !important;
             margin-bottom: 2rem !important;
         }}
-        body.force-print-mode .tab-btn {{ display: none !important; }}
-        body.force-print-mode #print_btn {{ display: none !important; }}
+        body.force-print-mode .tab-btn, body.force-print-mode #print_btn {{ display: none !important; }}
         
         @media print {{
             body {{ background-color: #ffffff !important; }}
             .sticky, .tab-btn, #print_btn {{ display: none !important; }}
             
-            /* 강제 인쇄 모드 활성화 시 각 탭 영역 설정 */
             body.force-print-mode #tab_proposal, 
             body.force-print-mode #tab_labor, 
+            body.force-print-mode #tab_corp, 
             body.force-print-mode #tab_fixed, 
             body.force-print-mode #tab_schedule {{
                 display: block !important;
                 page-break-before: always;
                 break-before: page;
             }}
-            /* 첫 번째 탭은 새 페이지 안 넘김 */
             body.force-print-mode #tab_proposal {{ page-break-before: avoid; break-before: auto; }}
             
-            /* 박스가 중간에 잘리는 현상 방지 */
             .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-blue-50, .bg-red-50, .bg-purple-50, .cert-card {{
                 page-break-inside: avoid;
                 break-inside: avoid;
             }}
-            
             .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
         }}
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Header -->
     <header class="bg-slate-900 text-white pt-12 pb-12 px-8 relative">
         <div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at top right, #3b82f6, transparent);"></div>
         <div class="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-end">
@@ -229,7 +237,6 @@ html_content = f"""
                 <p class="text-slate-400 font-light">업종코드: {industry_code} / 상시근로자: {current_employees}명</p>
             </div>
             <div class="mt-4 md:mt-0 text-right flex flex-col items-end">
-                <!-- 🖨️ 전용 인쇄 버튼 추가 -->
                 <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded shadow transition-colors flex items-center cursor-pointer">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     전체 내용 인쇄하기
@@ -240,20 +247,18 @@ html_content = f"""
         </div>
     </header>
 
-    <!-- Navigation -->
     <div class="bg-white border-b border-slate-200 sticky top-0 z-20">
         <div class="max-w-5xl mx-auto px-6 flex space-x-8 overflow-x-auto">
             <button onclick="switchTab('tab_proposal', this)" class="tab-btn py-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">핵심 제안 내용</button>
             <button onclick="switchTab('tab_labor', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">노무 및 비과세 설계</button>
+            <button onclick="switchTab('tab_corp', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">법인 전환 검토</button>
             <button onclick="switchTab('tab_fixed', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">인증/자금/지원금 분석</button>
             <button onclick="switchTab('tab_schedule', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">마스터 스케쥴</button>
         </div>
     </div>
 
-    <!-- Main Content -->
     <main class="max-w-5xl mx-auto px-6 py-8">
         
-        <!-- [가변] TAB 1: 핵심 제안 내용 -->
         <div id="tab_proposal" class="tab-content active">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <h2 class="text-2xl font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100">💡 {client_name} 전용 솔루션 구조 검토</h2>
@@ -263,12 +268,8 @@ html_content = f"""
             </div>
         </div>
 
-        <!-- [노무] TAB 2: 노무 및 비과세 설계 -->
         <div id="tab_labor" class="tab-content">
-            
-            <!-- 최저임금 & 근로계약서 -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print-break-inside-avoid">
-                <!-- 최저임금 현황 (자동 연동) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full z-0"></div>
                     <div class="relative z-10">
@@ -285,7 +286,6 @@ html_content = f"""
                     </div>
                 </div>
 
-                <!-- 근로계약서 미작성 리스크 -->
                 <div class="bg-red-50 rounded-2xl shadow-sm border border-red-100 p-6">
                     <h2 class="text-lg font-bold text-red-800 mb-4 border-b border-red-200 pb-2">🚨 근로계약서의 중요성 및 미작성 리스크</h2>
                     <p class="text-sm text-red-900 mb-3 break-keep">근로계약서는 사업주를 보호하는 <b>'최소한의 방어막'</b>입니다. 미작성 및 미교부 시 즉각적인 처벌 대상이 됩니다.</p>
@@ -297,7 +297,6 @@ html_content = f"""
                 </div>
             </div>
 
-            <!-- 5인 미만 vs 5인 이상 -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 print-break-inside-avoid">
                 <h2 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-slate-800">🏢 상시근로자 5인 미만 vs 5인 이상 노무관리 핵심 차이</h2>
                 <div class="overflow-x-auto">
@@ -325,61 +324,99 @@ html_content = f"""
                                 <td class="px-4 py-3">적용 제외 (해고 비교적 자유로움)</td>
                                 <td class="px-4 py-3 font-bold text-red-600">노동위원회 구제신청 가능 (정당한 사유 必)</td>
                             </tr>
-                            <tr>
-                                <td class="px-4 py-3 font-medium text-slate-800">휴업수당</td>
-                                <td class="px-4 py-3">지급 의무 없음</td>
-                                <td class="px-4 py-3 font-bold text-red-600">회사 귀책사유 휴업 시 평균임금 70% 지급</td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-3 font-medium text-slate-800">대체공휴일 (유급휴일)</td>
-                                <td class="px-4 py-3">적용 제외</td>
-                                <td class="px-4 py-3 font-bold text-red-600">빨간날 유급휴일 보장 의무 적용</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print-break-inside-avoid">
-                <!-- 주요 법정 수당 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h2 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-amber-500">⏰ 주요 법정 가산수당 (5인 이상)</h2>
                     <p class="text-sm text-slate-600 mb-4">포괄임금제를 세팅하더라도 아래 가산수당의 구조를 명확히 근로계약서에 명시해야 임금체불 리스크를 벗어납니다.</p>
                     <ul class="text-sm space-y-3 check-list text-slate-700">
-                        <li><b>연장근로수당:</b> 법정근로시간(1일 8시간, 주 40시간) 초과 근로 시 <b>[통상임금의 50% 가산]</b></li>
-                        <li><b>야간근로수당:</b> 밤 10시 ~ 다음 날 아침 6시 사이 근로 시 <b>[통상임금의 50% 가산]</b></li>
-                        <li><b>휴일근로수당:</b> 법정휴일 및 약정휴일 근로 시 8시간 이내 <b>[50% 가산]</b>, 8시간 초과분 <b>[100% 가산]</b></li>
+                        <li><b>연장근로수당:</b> 초과 근로 시 <b>[통상임금의 50% 가산]</b></li>
+                        <li><b>야간근로수당:</b> 밤 10시 ~ 아침 6시 <b>[통상임금의 50% 가산]</b></li>
+                        <li><b>휴일근로수당:</b> 휴일 근로 시 <b>[50%~100% 가산]</b></li>
                     </ul>
                 </div>
 
-                <!-- 4대보험 비과세 -->
                 <div class="bg-emerald-50 rounded-2xl shadow-sm border border-emerald-200 p-6">
                     <h2 class="text-lg font-bold text-emerald-800 mb-4 border-b border-emerald-200 pb-2">💎 4대보험 및 소득세 절감을 위한 '비과세 항목'</h2>
-                    <p class="text-sm text-emerald-900 mb-4 break-keep">세금과 4대보험료(노사 합산 약 19%) 산정 기준에서 제외되는 합법적인 비과세 수당을 세팅하여 <b>매월 고정비를 즉각적으로 절감</b>합니다.</p>
+                    <p class="text-sm text-emerald-900 mb-4 break-keep">세금과 4대보험료 산정 기준에서 제외되는 합법적인 비과세 수당을 세팅하여 <b>매월 고정비를 즉각적으로 절감</b>합니다.</p>
                     <ul class="text-sm space-y-2 text-emerald-800 font-medium bg-white p-4 rounded-lg">
                         <li class="flex justify-between items-center border-b border-slate-100 pb-2">
                             <span>🍚 식대 (중식대)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
                         </li>
                         <li class="flex justify-between items-center border-b border-slate-100 py-2">
-                            <span>🚗 자가운전보조금 (본인 명의 차량)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
+                            <span>🚗 자가운전보조금</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
                         </li>
                         <li class="flex justify-between items-center border-b border-slate-100 py-2">
-                            <span>👶 출산·보육수당 (만 6세 이하 자녀)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
+                            <span>👶 출산·보육수당</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
                         </li>
                         <li class="flex justify-between items-center pt-2">
-                            <span>🔬 연구보조비 (연구부서 설립 인가 시)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
+                            <span>🔬 연구보조비 (연구소 한정)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
                         </li>
                     </ul>
-                    <p class="text-[11px] text-emerald-600 mt-3 text-right">※ 1인당 월 40~60만 원 비과세 세팅 시, 연간 상당한 고정비 절감 효과 발생</p>
                 </div>
             </div>
-            
         </div>
 
-        <!-- [복합] TAB 3: 인증 / 자금 / 노무지원금 -->
+        <div id="tab_corp" class="tab-content print-break-inside-avoid">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100">⚖️ 개인사업자 vs 법인사업자 세금 시뮬레이션 및 타당성 검토</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-700 mb-4">당기순이익 <span class="text-blue-600">{net_income:,}만 원</span> 기준 세액 비교</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                                <p class="text-sm text-red-800 font-bold mb-1">개인 유지 시 (종합소득세 + 지방세 10%)</p>
+                                <div class="flex justify-between items-end">
+                                    <p class="text-3xl font-bold text-red-600">{personal_tax_total:,.0f}<span class="text-base font-normal text-red-800"> 만원</span></p>
+                                    <p class="text-xs text-red-700">유효세율: {personal_effective_rate:.1f}%</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <p class="text-sm text-blue-800 font-bold mb-1">법인 전환 시 (법인세 + 지방세 10%)</p>
+                                <div class="flex justify-between items-end">
+                                    <p class="text-3xl font-bold text-blue-600">{corp_tax_total:,.0f}<span class="text-base font-normal text-blue-800"> 만원</span></p>
+                                    <p class="text-xs text-blue-700">유효세율: {corp_effective_rate:.1f}%</p>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-emerald-100 p-5 rounded-xl border border-emerald-200 shadow-sm mt-4 text-center">
+                                <p class="text-emerald-900 font-bold text-lg">💡 법인 전환 시, 세금 <span class="text-2xl text-emerald-700">{tax_diff:,.0f}만 원</span> 절감 예상</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-center items-center h-full">
+                        <canvas id="taxChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+                
+                <h3 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-slate-800 mt-6">🏢 법인 전환 시 추가 기대 효과 (세금 외)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                        <h4 class="font-bold text-slate-700 mb-2">1. 자금 조달 및 신용도</h4>
+                        <p class="text-sm text-slate-600 break-keep">대외 신인도 상승으로 금융권 대출 및 정부 정책자금 한도가 대폭 상향되며, 외부 투자 유치(주식 발행)가 가능해집니다.</p>
+                    </div>
+                    <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                        <h4 class="font-bold text-slate-700 mb-2">2. 유한 책임</h4>
+                        <p class="text-sm text-slate-600 break-keep">사업 실패나 부도 발생 시, 출자한 자본금 한도 내에서만 책임을 지므로 대표이사 개인의 자산을 안전하게 보호할 수 있습니다.</p>
+                    </div>
+                    <div class="bg-white p-4 border border-slate-200 rounded-xl shadow-sm">
+                        <h4 class="font-bold text-slate-700 mb-2">3. 소득 분산 및 배당</h4>
+                        <p class="text-sm text-slate-600 break-keep">가족 주주 구성을 통한 배당소득 분산, 임원 퇴직금 산정 등 합법적이고 강력한 절세 플랜을 통해 자산을 극대화할 수 있습니다.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="tab_fixed" class="tab-content">
             
-            <!-- 1. 6대 지원금 동적 계산 항목 -->
             <div class="mb-10 print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-2 pl-2 border-l-4 border-amber-500">
                     💰 맞춤형 고용지원금 시뮬레이션
@@ -395,13 +432,10 @@ html_content = f"""
                 </div>
             </div>
 
-            <!-- 2. 클릭형 인터랙티브 인증 항목 (13종) -->
             <div class="mb-10 print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-2 pl-2 border-l-4 border-blue-500">🏆 기업 핵심 인증별 혜택</h2>
                 <p class="text-sm text-slate-500 mb-4 pl-3">💡 블록을 클릭하여 해당 기업이 받을 수 있는 <b>[진행 대상]</b> 인증을 시각적으로 강조해 보세요.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    
-                    <!-- 기존 인증들 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">기업부설연구소 / 전담부서</h3>
@@ -410,7 +444,6 @@ html_content = f"""
                             <li>• 연구원 인당 급여 중 월 20만원 비과세 처리</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">벤처기업 인증</h3>
@@ -419,7 +452,6 @@ html_content = f"""
                             <li>• 부동산(공장 등) 취등록세 75% 감면 혜택</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">소재·부품·장비 (소부장)</h3>
@@ -428,7 +460,6 @@ html_content = f"""
                             <li>• 병역특례 및 외국인 고용 가점 부여</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">뿌리기업 인증</h3>
@@ -437,7 +468,6 @@ html_content = f"""
                             <li>• 외국인 채용 제한 완화 및 전용 지원금 신청</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">여성기업 인증</h3>
@@ -446,7 +476,6 @@ html_content = f"""
                             <li>• 공공기관 의무구매 대상 및 입찰 가점 부여</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">직접생산확인서</h3>
@@ -455,7 +484,6 @@ html_content = f"""
                             <li>• 중소기업간 경쟁제품 지정 시 조달시장 진입</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">공장등록</h3>
@@ -464,8 +492,6 @@ html_content = f"""
                             <li>• 제조업 기반 각종 세제 혜택 및 전력 요금 감면</li>
                         </ul>
                     </div>
-
-                    <!-- 신규 추가 인증들 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">메인비즈 (Main-Biz)</h3>
@@ -474,7 +500,6 @@ html_content = f"""
                             <li>• 신용보증기금 보증료율 우대 및 정책자금 확대</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">이노비즈 (Inno-Biz)</h3>
@@ -483,7 +508,6 @@ html_content = f"""
                             <li>• 기술보증기금 한도 우대 및 정부 R&D 가점</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">ISO 9001</h3>
@@ -492,7 +516,6 @@ html_content = f"""
                             <li>• 대기업 협력업체 등록 및 공공 입찰 기본 요건</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">ISO 14001</h3>
@@ -501,7 +524,6 @@ html_content = f"""
                             <li>• 친환경/ESG 경영 증명 및 수출 기업 필수 요건</li>
                         </ul>
                     </div>
-
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">ISO 45001</h3>
@@ -510,8 +532,7 @@ html_content = f"""
                             <li>• 산업재해 예방 입증 및 공공기관 입찰 가점</li>
                         </ul>
                     </div>
-
-                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative lg:col-span-3">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">특허 (Patent)</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
@@ -519,16 +540,13 @@ html_content = f"""
                             <li>• 예상 소요 비용: <span class="font-bold text-blue-600">약 400만 원 ~ 1,000만 원</span></li>
                         </ul>
                     </div>
-
                 </div>
             </div>
 
-            <!-- 3. 고정 자금 종류 및 금리 현황 (색상 통일 완료) -->
             <div class="print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-emerald-500">🏦 기관별 정책/보증 자금 및 바우처 지원</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     
-                    <!-- 초록색: 중기부 / 중진공 계열 -->
                     <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
                         <h3 class="font-bold text-emerald-800 mb-2">1. 중소벤처기업진흥공단 (융자)</h3>
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 2.5% ~ 3.5% 내외</p>
@@ -547,7 +565,6 @@ html_content = f"""
                         </ul>
                     </div>
 
-                    <!-- 파란색: 보증기관 / 금융권 -->
                     <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
                         <h3 class="font-bold text-blue-800 mb-2">3. 신용/기술보증기금 (보증)</h3>
                         <p class="text-sm text-blue-700 font-bold mb-2 pb-2 border-b border-blue-200">예상: 연 4.0% ~ 5.5% + 보증료</p>
@@ -566,7 +583,6 @@ html_content = f"""
                         </ul>
                     </div>
 
-                    <!-- 빨간색: 안전보건공단 계열 -->
                     <div class="bg-red-50 p-5 rounded-xl border border-red-100 shadow-sm">
                         <h3 class="font-bold text-red-800 mb-2">5. 안전동행지원사업 (보조금)</h3>
                         <p class="text-sm text-red-700 font-bold mb-2 pb-2 border-b border-red-200">최대 1억 원 지원 (매칭 50%)</p>
@@ -585,7 +601,6 @@ html_content = f"""
                         </ul>
                     </div>
 
-                    <!-- 보라색: 지자체 -->
                     <div class="bg-purple-50 p-5 rounded-xl border border-purple-100 shadow-sm lg:col-span-3">
                         <h3 class="font-bold text-purple-800 mb-2">7. 지자체 정책자금 (이차보전)</h3>
                         <p class="text-sm text-purple-700 font-bold mb-2 pb-2 border-b border-purple-200">실질 체감 금리: 연 1.5% ~ 3.5% 수준</p>
@@ -605,34 +620,29 @@ html_content = f"""
             </div>
         </div>
 
-        <!-- [가변] TAB 4: 마스터 스케쥴 -->
         <div id="tab_schedule" class="tab-content print-break-inside-avoid">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <h2 class="text-2xl font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100">📅 단기 집중 스케쥴 (기준: {m1:02d}월 시작)</h2>
                 
                 <div class="relative border-l-2 border-slate-200 ml-3 space-y-8 py-2">
-                    <!-- Phase 1 -->
                     <div class="relative pl-8">
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-slate-400 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-bold mb-2">{m1:02d}월 ~ {m2:02d}월</span>
                         <h3 class="text-lg font-bold text-slate-800">인사/노무 기반 정비</h3>
                         <p class="text-slate-600 text-sm mt-1">근로계약서 및 필수합의서 작성, 법정의무교육, 취업규칙(10인 이상) 신고, 4대보험 절세 세팅</p>
                     </div>
-                    <!-- Phase 2 -->
                     <div class="relative pl-8">
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-bold mb-2">{m2:02d}월 ~ {m3:02d}월</span>
                         <h3 class="text-lg font-bold text-slate-800">인증 획득 프로세스 가동</h3>
                         <p class="text-slate-600 text-sm mt-1">연구전담부서 설립 신청, 뿌리기업/소부장 사전 점검 및 신청, 여성/벤처/메인/이노비즈 및 ISO, 특허 신청 진행</p>
                     </div>
-                    <!-- Phase 3 -->
                     <div class="relative pl-8">
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-sm font-bold mb-2">{m3:02d}월 ~ {m4:02d}월</span>
                         <h3 class="text-lg font-bold text-slate-800">재무/세무 결산 및 법무 정비</h3>
-                        <p class="text-slate-600 text-sm mt-1">가결산 정리, 임원 보수 적정성 판단, 상법 개정에 맞춘 정관 검토, 세액감면 적용 시뮬레이션</p>
+                        <p class="text-slate-600 text-sm mt-1">가결산 정리, 임원 보수 적정성 판단, 상법 개정에 맞춘 정관 검토, 세액감면 적용 시뮬레이션 및 법인전환 준비</p>
                     </div>
-                    <!-- Phase 4 -->
                     <div class="relative pl-8">
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm font-bold mb-2">{m4:02d}월 이후 지속</span>
@@ -646,14 +656,14 @@ html_content = f"""
     </main>
 
     <script>
-        // 1. 날짜 자동 출력 스크립트
+        // 날짜 자동 출력 스크립트
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         document.getElementById('auto_date').innerText = year + '년 ' + month + '월 ' + day + '일';
 
-        // 2. 탭 전환 스크립트
+        // 탭 전환 스크립트
         function switchTab(tabId, element) {{
             document.querySelectorAll('.tab-btn').forEach(btn => {{
                 btn.classList.remove('text-blue-600', 'border-blue-600', 'font-bold');
@@ -668,7 +678,7 @@ html_content = f"""
             document.getElementById(tabId).classList.add('active');
         }}
 
-        // 3. 인증 카드 클릭 하이라이트 토글 스크립트
+        // 인증 카드 클릭 하이라이트 토글 스크립트
         function toggleCert(el) {{
             el.classList.toggle('border-blue-500');
             el.classList.toggle('ring-2');
@@ -686,7 +696,7 @@ html_content = f"""
             }}
         }}
 
-        // 4. 강제 인쇄 실행 스크립트
+        // 강제 인쇄 실행 스크립트
         function executePrint() {{
             document.body.classList.add('force-print-mode');
             setTimeout(() => {{
@@ -696,6 +706,39 @@ html_content = f"""
                 }}, 500);
             }}, 200);
         }}
+
+        // Chart.js 그래프 렌더링 (법인 전환 검토 탭용)
+        document.addEventListener('DOMContentLoaded', function() {{
+            const ctx = document.getElementById('taxChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'bar',
+                data: {{
+                    labels: ['개인사업자 (소득세)', '법인사업자 (법인세)'],
+                    datasets: [{{
+                        label: '예상 산출 세액 (단위: 만원)',
+                        data: [{personal_tax_total}, {corp_tax_total}],
+                        backgroundColor: ['rgba(239, 68, 68, 0.7)', 'rgba(59, 130, 246, 0.7)'],
+                        borderColor: ['rgb(239, 68, 68)', 'rgb(59, 130, 246)'],
+                        borderWidth: 1
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {{
+                        legend: {{ display: false }}
+                    }},
+                    scales: {{
+                        y: {{
+                            beginAtZero: true,
+                            ticks: {{
+                                callback: function(value) {{ return value.toLocaleString() + '만원'; }}
+                            }}
+                        }}
+                    }}
+                }}
+            }});
+        }});
     </script>
 </body>
 </html>
