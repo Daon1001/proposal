@@ -4,9 +4,9 @@ import base64
 from datetime import datetime
 
 # 페이지 기본 설정
-st.set_page_config(page_title="통합 경영제안서 생성기", layout="wide")
+st.set_page_config(page_title="제이원 통합 경영제안서 생성기", layout="wide")
 
-st.title("📊 통합 경영컨설팅 시스템")
+st.title("📊 주식회사 제이원 - 통합 경영컨설팅 시스템")
 st.write("좌측에 정보를 입력하세요. 모든 상세 데이터가 요약 없이 원문 그대로 제안서에 반영됩니다.")
 
 # 화면 분할 (입력폼 1 : 미리보기 2)
@@ -97,7 +97,7 @@ with col1:
     monthly_wage = min_wage * 209
 
 # ----------------------------------------------------------------------------------
-# HTML 소스코드 (상세 내용 100% 복구 및 디자인 통합)
+# HTML 소스코드 (인쇄 시 법인 탭 제외 로직 적용)
 # ----------------------------------------------------------------------------------
 html_content = f"""
 <!DOCTYPE html>
@@ -116,7 +116,7 @@ html_content = f"""
         .check-list li::before {{ content: '✔'; color: #0ea5e9; margin-right: 8px; font-weight: bold; }}
         .danger-list li::before {{ content: '⚠️'; margin-right: 8px; font-weight: bold; }}
         
-        /* 🖨️ 인쇄 설정: 가로 방향 및 탭별 페이지 분할 */
+        /* 🖨️ 인쇄 설정: 가로 방향 및 페이지 분할 */
         @media print {{
             @page {{
                 size: A4 landscape;
@@ -125,8 +125,9 @@ html_content = f"""
             body {{ background-color: #ffffff !important; }}
             .sticky, .tab-btn, #print_btn {{ display: none !important; }}
             
-            /* 모든 탭 내용을 펼치고 각 탭을 새로운 페이지에서 시작 */
-            .tab-content {{ 
+            /* 활성화된 탭 내용만 펼치기 */
+            .tab-content {{ display: none !important; }}
+            .tab-content.print-active {{ 
                 display: block !important; 
                 opacity: 1 !important; 
                 page-break-after: always !important; 
@@ -134,7 +135,6 @@ html_content = f"""
                 padding-top: 10px !important;
             }}
             #tab_proposal {{ page-break-before: avoid !important; }}
-            
             .print-break-inside-avoid {{ page-break-inside: avoid; break-inside: avoid; }}
             .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
         }}
@@ -150,7 +150,7 @@ html_content = f"""
                 <p class="text-slate-400 text-xs">업종코드: {industry_code} / 상시근로자: {current_employees}명</p>
             </div>
             <div class="text-right flex flex-col items-end">
-                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded shadow transition-all cursor-pointer">🖨️ 가로형 전체 인쇄하기</button>
+                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded shadow transition-all cursor-pointer">🖨️ 전체 내용 인쇄하기</button>
                 <p class="text-slate-400 text-xs">제안일자: <span id="auto_date"></span></p>
                 <p class="text-lg font-bold mt-1">{my_company_name}</p>
             </div>
@@ -169,14 +169,14 @@ html_content = f"""
     </div>
 
     <main class="max-w-5xl mx-auto px-6 py-8">
-        <div id="tab_proposal" class="tab-content active">
+        <div id="tab_proposal" class="tab-content active print-active">
             <div class="bg-white rounded-2xl shadow-sm border p-8">
                 <h2 class="text-2xl font-bold mb-6 pb-4 border-b">💡 {client_name} 전용 솔루션 구조</h2>
                 <ul class="text-lg leading-relaxed space-y-2">{proposal_items}</ul>
             </div>
         </div>
 
-        <div id="tab_labor" class="tab-content">
+        <div id="tab_labor" class="tab-content print-active">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print-break-inside-avoid">
                 <div class="bg-white rounded-2xl border p-6">
                     <h2 class="text-lg font-bold text-blue-800 mb-4 border-b pb-2">⏱️ 2026년 최저임금 및 법적 의무</h2>
@@ -193,7 +193,7 @@ html_content = f"""
                     <ul class="text-xs space-y-2 danger-list">
                         <li><b>형사처벌 리스크:</b> 정규직 미작성 시 벌금 최대 500만 원 (전과 기록)</li>
                         <li><b>즉시 부과 리스크:</b> 단시간/기간제 미작성 시 <b>과태료 500만 원 즉시 부과</b></li>
-                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서가 없으면 사업주가 100% 불리한 책임을 지게 됩니다.</li>
+                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서 부재는 사업주가 100% 불리한 책임을 지게 됩니다.</li>
                     </ul>
                 </div>
             </div>
@@ -237,7 +237,7 @@ html_content = f"""
             </div>
         </div>
 
-        <div id="tab_corp" class="tab-content">
+        <div id="tab_corp" class="tab-content {'print-active' if show_corp_tab else ''}">
             <div class="bg-white rounded-2xl border p-8">
                 <h2 class="text-2xl font-bold mb-6 pb-4 border-b">⚖️ 개인 vs 법인 통합 세무 비용 비교</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-center">
@@ -259,7 +259,7 @@ html_content = f"""
             </div>
         </div>
 
-        <div id="tab_fixed" class="tab-content">
+        <div id="tab_fixed" class="tab-content print-active">
             <h2 class="text-xl font-bold mb-4 border-l-4 border-amber-500 pl-2">💰 고용지원금 시뮬레이션 (총 {total_subsidy:,}만원 확보 예상)</h2>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">{card_youth}{card_senior}{card_women}{card_continuous}{card_disabled}{card_parental}</div>
             
@@ -271,7 +271,7 @@ html_content = f"""
                 </div>
                 <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
                     <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
-                    <h3 class="font-bold text-sm mb-1">직접생산확인서 / 공장등록</h3><p class="text-[10px] text-slate-500">• 공공조달 필수 / 제조업 세제 혜택</p>
+                    <h3 class="font-bold text-sm mb-1">직접생산확인서 / 공장등록</h3><p class="text-[10px] text-slate-500">• 공공조발 필수 / 제조업 세제 혜택</p>
                 </div>
                 <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
                     <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
@@ -292,7 +292,7 @@ html_content = f"""
             </div>
         </div>
 
-        <div id="tab_fund" class="tab-content">
+        <div id="tab_fund" class="tab-content print-active">
             <h2 class="text-xl font-bold mb-6 border-l-4 border-emerald-500 pl-2">🏦 기관별 정책자금 및 지원사업 상세 가이드</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-200 print-break-inside-avoid shadow-sm">
@@ -320,14 +320,14 @@ html_content = f"""
                 <div class="bg-purple-50 p-6 rounded-2xl border border-purple-200 print-break-inside-avoid shadow-sm">
                     <h3 class="font-bold text-purple-800 mb-3 border-b border-purple-200 pb-2">🟣 4. 지자체 정책자금 (도/시 자금)</h3>
                     <ul class="text-xs space-y-2 text-purple-700">
-                        <li>• <b>[이차보전 지원]</b> 은행 이자 중 1.0~3.0%를 지자체가 대신 납부 및 실질 이자 절감</li>
+                        <li>• <b>[이차보전 지원]</b> 은행 이자 중 1.0~3.0%를 지자체가 대신 납부하여 실질 이자 절감</li>
                         <li>• <b>[시흥시 자금]</b> 시 전용 예산으로 저리 운용 (조기 소진 유의 및 적기 신청 필수)</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <div id="tab_schedule" class="tab-content">
+        <div id="tab_schedule" class="tab-content print-active">
             <div class="bg-white rounded-2xl border p-8 print-break-inside-avoid">
                 <h2 class="text-2xl font-bold mb-6 pb-4 border-b">📅 컨설팅 마스터 로드맵</h2>
                 <div class="space-y-8">
