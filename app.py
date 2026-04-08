@@ -101,7 +101,7 @@ with col1:
     def generate_subsidy_card(title, target, eligible, max_amount_str, scheduled_count, total_amount):
         if eligible:
             return f"""
-            <div class="bg-amber-50 p-5 rounded-xl border border-amber-100 shadow-sm relative overflow-hidden transition-all">
+            <div class="bg-amber-50 p-5 rounded-xl border border-amber-100 shadow-sm relative overflow-hidden transition-all print-break-inside-avoid">
                 <div class="absolute right-0 top-0 bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1 rounded-bl-lg">예정: {scheduled_count}명</div>
                 <div class="inline-block bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded mb-2">신청 가능</div>
                 <h3 class="font-bold text-amber-800 mb-1 tracking-tight">{title}</h3>
@@ -112,7 +112,7 @@ with col1:
             """
         else:
             return f"""
-            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden opacity-70 grayscale">
+            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden opacity-70 grayscale print-break-inside-avoid">
                 <div class="absolute right-0 top-0 bg-slate-200 text-slate-600 text-xs font-bold px-3 py-1 rounded-bl-lg">예정: {scheduled_count}명</div>
                 <div class="inline-block bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded mb-2">신청 불가 (요건 미달)</div>
                 <h3 class="font-bold text-slate-600 mb-1 tracking-tight">{title}</h3>
@@ -130,6 +130,12 @@ with col1:
     card_disabled = generate_subsidy_card("장애인 신규고용장려금", "장애인 근로자 (경증/중증)", disabled_eligible, "1인 최대 720만 원 (추산)", disabled_count, disabled_total)
     card_parental = generate_subsidy_card("육아휴직 대체인력지원", "육아휴직자 발생 시 대체", parental_eligible, "1인 최대 960만 원 (1년)", parental_count, parental_total)
 
+    st.subheader("📝 4. 노무 기준 설정 (최저임금)")
+    st.write("해당 연도의 최저시급을 입력하면 월 환산액(209시간 기준)이 자동 계산되어 반영됩니다.")
+    min_wage = st.number_input("현재 최저시급 (원)", min_value=0, value=10030, step=10)
+    
+    # 209시간 기준 월 최저임금 자동 계산
+    monthly_wage = min_wage * 209
 
 # HTML 템플릿에 변수 및 고정 데이터 결합
 html_content = f"""
@@ -146,6 +152,8 @@ html_content = f"""
             font-family: 'Noto Sans KR', sans-serif;
             background-color: #f8fafc;
             color: #1e293b;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }}
         .tab-content {{ display: none; animation: fadeIn 0.4s ease-in-out; }}
         .tab-content.active {{ display: block; }}
@@ -170,6 +178,37 @@ html_content = f"""
         .danger-list li::before {{
             content: '⚠️';
             margin-right: 8px;
+        }}
+
+        /* ========================================= */
+        /* 🖨️ 프린트 출력 전용 CSS (자동 레이아웃 변경) */
+        /* ========================================= */
+        @media print {{
+            body {{ background-color: #ffffff !important; }}
+            
+            /* 네비게이션 탭 버튼 인쇄 시 숨김 */
+            .sticky, .tab-btn {{ display: none !important; }}
+            
+            /* 모든 탭 내용을 인쇄 시 강제로 한 번에 펼침 */
+            .tab-content {{ 
+                display: block !important; 
+                page-break-before: always; /* 탭이 바뀔 때마다 새 페이지로 넘김 */
+                break-before: page;
+                margin-top: 0 !important;
+                padding-top: 20px !important;
+            }}
+            
+            /* 첫 번째 탭은 새 페이지로 넘기지 않음 */
+            #tab_proposal {{ page-break-before: avoid; break-before: auto; padding-top: 0 !important; }}
+            
+            /* 박스가 페이지 중간에 잘리는 것을 방지 */
+            .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-red-50 {{
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }}
+            
+            /* 불필요한 테두리 그림자 제거 */
+            .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
         }}
     </style>
 </head>
@@ -196,7 +235,7 @@ html_content = f"""
         <div class="max-w-5xl mx-auto px-6 flex space-x-8 overflow-x-auto">
             <button onclick="switchTab('tab_proposal', this)" class="tab-btn py-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">핵심 제안 내용</button>
             <button onclick="switchTab('tab_labor', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">노무 및 비과세 설계</button>
-            <button onclick="switchTab('tab_fixed', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">인증/자금/지원금</button>
+            <button onclick="switchTab('tab_fixed', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">인증/자금/지원금 분석</button>
             <button onclick="switchTab('tab_schedule', this)" class="tab-btn py-4 font-medium text-slate-500 border-b-2 border-transparent whitespace-nowrap">마스터 스케쥴</button>
         </div>
     </div>
@@ -218,19 +257,19 @@ html_content = f"""
         <div id="tab_labor" class="tab-content">
             
             <!-- 최저임금 & 근로계약서 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- 최저임금 현황 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print-break-inside-avoid">
+                <!-- 최저임금 현황 (자동 연동) -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50 rounded-full z-0"></div>
                     <div class="relative z-10">
-                        <h2 class="text-lg font-bold text-blue-800 mb-4 border-b pb-2">⏱️ 현재 최저임금 현황 (10,030원 기준)</h2>
+                        <h2 class="text-lg font-bold text-blue-800 mb-4 border-b pb-2">⏱️ 현재 최저임금 현황 ({min_wage:,}원 기준)</h2>
                         <div class="flex justify-between items-end mb-4">
                             <p class="text-slate-600 font-medium">최저 시급</p>
-                            <p class="text-2xl font-bold text-blue-900">10,030<span class="text-base font-normal text-slate-500"> 원</span></p>
+                            <p class="text-2xl font-bold text-blue-900">{min_wage:,}<span class="text-base font-normal text-slate-500"> 원</span></p>
                         </div>
                         <div class="flex justify-between items-end bg-blue-50 p-3 rounded-lg">
                             <p class="text-blue-800 font-bold">월 환산액 <span class="text-xs font-normal">(주 40시간/209시간 기준)</span></p>
-                            <p class="text-2xl font-bold text-blue-600">2,096,270<span class="text-base font-normal"> 원</span></p>
+                            <p class="text-2xl font-bold text-blue-600">{monthly_wage:,}<span class="text-base font-normal"> 원</span></p>
                         </div>
                         <p class="text-xs text-slate-400 mt-3 break-keep">※ 주휴수당을 포함한 월 기본급 세팅 시 반드시 위 금액 이상으로 설계해야 노동부 점검 시 법 위반을 피할 수 있습니다.</p>
                     </div>
@@ -243,13 +282,13 @@ html_content = f"""
                     <ul class="text-sm text-red-800 space-y-2 danger-list font-medium">
                         <li>정규직 근로자 미작성 시: <span class="bg-red-200 px-1 rounded">벌금 최대 500만 원 (형사처벌)</span></li>
                         <li>기간제/단시간 근로자 미작성 시: <span class="bg-red-200 px-1 rounded">과태료 최대 500만 원 (즉시 부과)</span></li>
-                        <li>임금체불 및 부당해고 등 노동 분쟁 발생 시, 계약서 부재는 100% 사업주에게 절대적으로 불리하게 작용합니다.</li>
+                        <li>임금체불 및 부당해고 등 분쟁 발생 시, 계약서 부재는 100% 사업주에게 불리하게 작용합니다.</li>
                     </ul>
                 </div>
             </div>
 
             <!-- 5인 미만 vs 5인 이상 -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8 print-break-inside-avoid">
                 <h2 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-slate-800">🏢 상시근로자 5인 미만 vs 5인 이상 노무관리 핵심 차이</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm text-left">
@@ -291,7 +330,7 @@ html_content = f"""
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 print-break-inside-avoid">
                 <!-- 주요 법정 수당 -->
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                     <h2 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-amber-500">⏰ 주요 법정 가산수당 (5인 이상)</h2>
@@ -312,7 +351,7 @@ html_content = f"""
                             <span>🍚 식대 (중식대)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
                         </li>
                         <li class="flex justify-between items-center border-b border-slate-100 py-2">
-                            <span>🚗 자가운전보조금 (본인 명의 차량 업무용 사용)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
+                            <span>🚗 자가운전보조금 (본인 명의 차량)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
                         </li>
                         <li class="flex justify-between items-center border-b border-slate-100 py-2">
                             <span>👶 출산·보육수당 (만 6세 이하 자녀)</span> <span class="bg-emerald-100 text-emerald-700 px-2 rounded">월 최대 20만 원</span>
@@ -331,7 +370,7 @@ html_content = f"""
         <div id="tab_fixed" class="tab-content">
             
             <!-- 1. 6대 지원금 동적 계산 항목 -->
-            <div class="mb-10">
+            <div class="mb-10 print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-2 pl-2 border-l-4 border-amber-500">
                     💰 맞춤형 고용지원금 시뮬레이션
                 </h2>
@@ -347,7 +386,7 @@ html_content = f"""
             </div>
 
             <!-- 2. 고정 인증 항목 -->
-            <div class="mb-10">
+            <div class="mb-10 print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-blue-500">🏆 기업 핵심 인증별 혜택</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
@@ -382,7 +421,7 @@ html_content = f"""
             </div>
 
             <!-- 3. 고정 자금 종류 및 금리 현황 -->
-            <div>
+            <div class="print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-emerald-500">🏦 기관별 정책/보증 자금 및 예상 금리 구조</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     
@@ -433,7 +472,7 @@ html_content = f"""
         </div>
 
         <!-- [가변] TAB 4: 마스터 스케쥴 -->
-        <div id="tab_schedule" class="tab-content">
+        <div id="tab_schedule" class="tab-content print-break-inside-avoid">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
                 <h2 class="text-2xl font-bold text-slate-800 mb-6 pb-4 border-b border-slate-100">📅 단기 집중 스케쥴 (기준: {m1:02d}월 시작)</h2>
                 
@@ -507,6 +546,6 @@ with col2:
 
     # 완성된 HTML 파일 다운로드 버튼 생성
     b64 = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-    download_link = f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 [ {client_name} ] 맞춤 제안서 파일로 다운로드</a>'
+    download_link = f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 [ {client_name} ] 맞춤 제안서 파일로 다운로드 (프린트 지원)</a>'
     
     st.markdown(download_link, unsafe_allow_html=True)
