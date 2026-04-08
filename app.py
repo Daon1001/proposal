@@ -395,13 +395,13 @@ html_content = f"""
                 </div>
             </div>
 
-            <!-- 2. 클릭형 인터랙티브 인증 항목 -->
+            <!-- 2. 클릭형 인터랙티브 인증 항목 (13종) -->
             <div class="mb-10 print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-2 pl-2 border-l-4 border-blue-500">🏆 기업 핵심 인증별 혜택</h2>
                 <p class="text-sm text-slate-500 mb-4 pl-3">💡 블록을 클릭하여 해당 기업이 받을 수 있는 <b>[진행 대상]</b> 인증을 시각적으로 강조해 보세요.</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     
-                    <!-- 인증 1 -->
+                    <!-- 기존 인증들 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">기업부설연구소 / 전담부서</h3>
@@ -411,7 +411,6 @@ html_content = f"""
                         </ul>
                     </div>
 
-                    <!-- 인증 2 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">벤처기업 인증</h3>
@@ -421,93 +420,170 @@ html_content = f"""
                         </ul>
                     </div>
 
-                    <!-- 인증 3 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
-                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">소재·부품·장비 (소부장) 인증</h3>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">소재·부품·장비 (소부장)</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 한국은행 금융중개지원 대출 및 지원금 우대</li>
                             <li>• 병역특례 및 외국인 고용 가점 부여</li>
                         </ul>
                     </div>
 
-                    <!-- 인증 4 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">뿌리기업 인증</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 정책자금 대출 실행 시 이자율 인하 및 한도 상향</li>
-                            <li>• 외국인 채용 제한 완화 및 전용 지원금 신청 가능</li>
+                            <li>• 외국인 채용 제한 완화 및 전용 지원금 신청</li>
                         </ul>
                     </div>
 
-                    <!-- 인증 5 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">여성기업 인증</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 공공기관 수의계약 한도 5천만 원으로 확대</li>
-                            <li>• 공공기관 의무구매 대상 및 입찰 가점 부여 혜택</li>
+                            <li>• 공공기관 의무구매 대상 및 입찰 가점 부여</li>
                         </ul>
                     </div>
 
-                    <!-- 인증 6 -->
                     <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">직접생산확인서</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
-                            <li>• 조달청(나라장터) 및 공공기관 입찰 참여 필수 요건</li>
-                            <li>• 중소기업간 경쟁제품 지정 시 공공 조달시장 진입 가능</li>
+                            <li>• 조달청 및 공공기관 입찰 참여 필수 요건</li>
+                            <li>• 중소기업간 경쟁제품 지정 시 조달시장 진입</li>
                         </ul>
                     </div>
 
-                    <!-- 인증 7 -->
-                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative md:col-span-2 lg:col-span-1">
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
                         <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
                         <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">공장등록</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
-                            <li>• 정부 주요 지원사업 및 융자 신청 시 필수 기본 요건</li>
-                            <li>• 제조업 기반 각종 세제 혜택 및 전력 요금 감면 적용</li>
+                            <li>• 정부 주요 지원사업 및 융자 신청 필수 기본 요건</li>
+                            <li>• 제조업 기반 각종 세제 혜택 및 전력 요금 감면</li>
+                        </ul>
+                    </div>
+
+                    <!-- 신규 추가 인증들 -->
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">메인비즈 (Main-Biz)</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>• 경영혁신형 중소기업 인증 마크 부여</li>
+                            <li>• 신용보증기금 보증료율 우대 및 정책자금 확대</li>
+                        </ul>
+                    </div>
+
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">이노비즈 (Inno-Biz)</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>• 기술혁신형 중소기업 인증 마크 부여</li>
+                            <li>• 기술보증기금 한도 우대 및 정부 R&D 가점</li>
+                        </ul>
+                    </div>
+
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">ISO 9001</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>• 품질경영시스템 국제 규격 인증</li>
+                            <li>• 대기업 협력업체 등록 및 공공 입찰 기본 요건</li>
+                        </ul>
+                    </div>
+
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">ISO 14001</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>• 환경경영시스템 국제 규격 인증</li>
+                            <li>• 친환경/ESG 경영 증명 및 수출 기업 필수 요건</li>
+                        </ul>
+                    </div>
+
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">ISO 45001</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>• 안전보건경영시스템 (중대재해처벌법 선제 대응)</li>
+                            <li>• 산업재해 예방 입증 및 공공기관 입찰 가점</li>
+                        </ul>
+                    </div>
+
+                    <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md relative">
+                        <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg hidden">✔️ 진행 대상</div>
+                        <h3 class="cert-title font-bold text-slate-700 mb-2 transition-colors">특허 (Patent)</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>• 기업의 독점적 기술/지식재산권 확보 수단</li>
+                            <li>• 예상 소요 비용: <span class="font-bold text-blue-600">약 400만 원 ~ 1,000만 원</span></li>
                         </ul>
                     </div>
 
                 </div>
             </div>
 
-            <!-- 3. 고정 자금 종류 및 금리 현황 -->
+            <!-- 3. 고정 자금 종류 및 금리 현황 (신규 자금 포함) -->
             <div class="print-break-inside-avoid">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-emerald-500">🏦 기관별 정책/보증 자금 및 예상 금리 구조</h2>
+                <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-emerald-500">🏦 기관별 정책/보증 자금 및 바우처 지원</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     
-                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100">
+                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
                         <h3 class="font-bold text-emerald-800 mb-2">1. 중소벤처기업진흥공단</h3>
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 2.5% ~ 3.5% 내외</p>
                         <ul class="text-xs text-emerald-700 space-y-1 break-keep">
                             <li>• <b>성격:</b> 직접 대출 (정책자금 기준금리 적용)</li>
-                            <li>• <b>특징:</b> 시중보다 저렴한 고정/변동 금리, 창업기반 및 신성장 자금 등 시설/운전자금 지원</li>
+                            <li>• <b>특징:</b> 창업기반/신성장 등 시설/운전자금 저리 지원</li>
                         </ul>
                     </div>
 
-                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100">
+                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
                         <h3 class="font-bold text-emerald-800 mb-2">2. 신용/기술보증기금 (신보/기보)</h3>
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 4.0% ~ 5.5% + 보증료</p>
                         <ul class="text-xs text-emerald-700 space-y-1 break-keep">
-                            <li>• <b>성격:</b> 보증서 발급 대출 (보증료율 0.5~1.5% 별도)</li>
-                            <li>• <b>특징:</b> 담보력이 부족해도 신용도 및 기술 등급 평가를 통해 1금융권 대출 가능</li>
+                            <li>• <b>성격:</b> 보증서 발급 1금융권 연계 대출</li>
+                            <li>• <b>특징:</b> 담보 부족 시 신용도/기술 등급 평가로 대출 보증</li>
                         </ul>
                     </div>
 
-                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100">
+                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm">
                         <h3 class="font-bold text-emerald-800 mb-2">3. 일반 시중 은행</h3>
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">예상: 연 4.5% ~ 6.5% 내외</p>
                         <ul class="text-xs text-emerald-700 space-y-1 break-keep">
                             <li>• <b>성격:</b> 자체 신용 및 담보 대출</li>
-                            <li>• <b>특징:</b> 금리는 다소 높을 수 있으나, 재무제표가 양호할 경우 자체 한도 산출이 빠름</li>
+                            <li>• <b>특징:</b> 재무제표 양호 시 신속한 자체 한도 산출 가능</li>
                         </ul>
                     </div>
 
-                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 lg:col-span-3">
-                        <h3 class="font-bold text-emerald-800 mb-2">4. 지자체 정책자금 (도 자금 / 시 자금 이차보전)</h3>
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
+                        <h3 class="font-bold text-blue-800 mb-2">4. 혁신성장바우처</h3>
+                        <p class="text-sm text-blue-700 font-bold mb-2 pb-2 border-b border-blue-200">최대 5,000만 원 (바우처 지급)</p>
+                        <ul class="text-xs text-blue-800 space-y-1 break-keep">
+                            <li>• <b>성격:</b> 중소기업 혁신바우처 사업 (정부 무상지원 성격)</li>
+                            <li>• <b>특징:</b> 컨설팅, 기술지원, 마케팅 등 맞춤형 패키지 서비스 제공</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-red-50 p-5 rounded-xl border border-red-100 shadow-sm">
+                        <h3 class="font-bold text-red-800 mb-2">5. 안전동행지원사업</h3>
+                        <p class="text-sm text-red-700 font-bold mb-2 pb-2 border-b border-red-200">최대 1억 원 지원 (매칭 50%)</p>
+                        <ul class="text-xs text-red-800 space-y-1 break-keep">
+                            <li>• <b>성격:</b> 50인 미만 중소/고위험 사업장 대상 공단 지원</li>
+                            <li>• <b>특징:</b> 노후/위험 공정 개선 및 중대재해예방 설비 교체 비용 지원</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-red-50 p-5 rounded-xl border border-red-100 shadow-sm">
+                        <h3 class="font-bold text-red-800 mb-2">6. 산업재해예방시설 융자</h3>
+                        <p class="text-sm text-red-700 font-bold mb-2 pb-2 border-b border-red-200">고정금리 연 1.5% (초저리)</p>
+                        <ul class="text-xs text-red-800 space-y-1 break-keep">
+                            <li>• <b>성격:</b> 안전보건공단 지원 초저리 융자 (최대 10억 원 한도)</li>
+                            <li>• <b>특징:</b> 유해/위험 기계 및 안전/보건 설비 도입 시 활용 가능</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-emerald-50 p-5 rounded-xl border border-emerald-100 shadow-sm lg:col-span-3">
+                        <h3 class="font-bold text-emerald-800 mb-2">7. 지자체 정책자금 (도 자금 / 시 자금 이차보전)</h3>
                         <p class="text-sm text-emerald-700 font-bold mb-2 pb-2 border-b border-emerald-200">실질 체감 금리: 연 1.5% ~ 3.5% 수준</p>
                         <div class="flex flex-col md:flex-row gap-4 mt-2">
                             <ul class="text-xs text-emerald-700 space-y-1 break-keep flex-1">
@@ -590,18 +666,15 @@ html_content = f"""
 
         // 3. 인증 카드 클릭 하이라이트 토글 스크립트
         function toggleCert(el) {{
-            // 테두리 및 배경 토글
             el.classList.toggle('border-blue-500');
             el.classList.toggle('ring-2');
             el.classList.toggle('ring-blue-500');
             el.classList.toggle('bg-blue-50');
             el.classList.toggle('bg-white');
             
-            // 배지 토글
             const badge = el.querySelector('.cert-badge');
             if (badge) badge.classList.toggle('hidden');
             
-            // 텍스트 색상 토글
             const title = el.querySelector('.cert-title');
             if (title) {{
                 title.classList.toggle('text-slate-700');
@@ -609,7 +682,7 @@ html_content = f"""
             }}
         }}
 
-        // 4. 강제 인쇄 실행 스크립트 (모든 탭을 강제로 열고 인쇄)
+        // 4. 강제 인쇄 실행 스크립트
         function executePrint() {{
             document.body.classList.add('force-print-mode');
             setTimeout(() => {{
