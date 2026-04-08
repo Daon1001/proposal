@@ -6,7 +6,7 @@ from datetime import datetime
 # 페이지 기본 설정
 st.set_page_config(page_title="제이원 통합 경영제안서 생성기", layout="wide")
 
-st.title("📊 주식회사 제이원 - 통합 경영컨설팅 시스템")
+st.title("📊 통합 경영컨설팅 시스템")
 st.write("좌측에 정보를 입력하세요. 모든 상세 데이터가 요약 없이 원문 그대로 제안서에 반영됩니다.")
 
 # 화면 분할 (입력폼 1 : 미리보기 2)
