@@ -42,9 +42,6 @@ with col1:
         women_count = st.number_input("③ 새일여성", min_value=0, value=1)
         parental_count = st.number_input("⑥ 대체인력", min_value=0, value=0)
 
-    # ---------------------------------------------------------
-    # [중요] 지원금 카드 변수 생성 로직 (NameError 방지)
-    # ---------------------------------------------------------
     def generate_subsidy_card(title, target, eligible, max_amount_str, scheduled_count, total_amount):
         if eligible:
             return f"""
@@ -97,7 +94,7 @@ with col1:
     monthly_wage = min_wage * 209
 
 # ----------------------------------------------------------------------------------
-# HTML 소스코드 (상세 내용 100% 복구 및 디자인 통합)
+# HTML (가로 출력 및 페이지 분할 최적화 적용)
 # ----------------------------------------------------------------------------------
 html_content = f"""
 <!DOCTYPE html>
@@ -116,14 +113,34 @@ html_content = f"""
         .check-list li::before {{ content: '✔'; color: #0ea5e9; margin-right: 8px; font-weight: bold; }}
         .danger-list li::before {{ content: '⚠️'; margin-right: 8px; font-weight: bold; }}
         
-        body.force-print-mode .tab-content {{ display: block !important; opacity: 1 !important; page-break-before: always; }}
-        body.force-print-mode #tab_proposal {{ page-break-before: avoid; }}
-        body.force-print-mode .tab-btn, body.force-print-mode #print_btn {{ display: none !important; }}
+        /* 🖨️ 인쇄 설정 핵심 */
         @media print {{
+            @page {{
+                size: A4 landscape; /* 가로 출력 강제 설정 */
+                margin: 10mm;
+            }}
             body {{ background-color: #ffffff !important; }}
             .sticky, .tab-btn, #print_btn {{ display: none !important; }}
+            
+            /* 모든 탭을 세로로 쫙 펼치고, 각 탭이 끝날 때마다 강제로 다음 페이지로 넘김 */
+            .tab-content {{ 
+                display: block !important; 
+                opacity: 1 !important; 
+                page-break-after: always !important; /* 탭 하나당 A4 한 장 */
+                margin-bottom: 20px !important;
+                padding: 10px !important;
+            }}
+            
+            /* 마지막 탭은 페이지 넘김 안 함 */
+            #tab_schedule {{ page-break-after: auto !important; }}
+            
             .print-break-inside-avoid {{ page-break-inside: avoid; break-inside: avoid; }}
             .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
+            
+            /* 글씨 크기 미세 보정 (A4 가로에 꽉 차게) */
+            h1 {{ font-size: 28pt !important; }}
+            h2 {{ font-size: 20pt !important; }}
+            li, p, td, th {{ font-size: 11pt !important; }}
         }}
     </style>
 </head>
@@ -137,14 +154,14 @@ html_content = f"""
                 <p class="text-slate-400 text-xs">업종코드: {industry_code} / 상시근로자: {current_employees}명</p>
             </div>
             <div class="text-right flex flex-col items-end">
-                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded shadow transition-all cursor-pointer">🖨️ 전체 내용 인쇄하기</button>
+                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 px-4 rounded shadow transition-all cursor-pointer">🖨️ 전체 내용 인쇄하기 (A4 가로)</button>
                 <p class="text-slate-400 text-xs">제안일자: <span id="auto_date"></span></p>
                 <p class="text-lg font-bold mt-1">{my_company_name}</p>
             </div>
         </div>
     </header>
 
-    <div class="bg-white border-b sticky top-0 z-20 overflow-x-auto shadow-sm">
+    <div class="bg-white border-b sticky top-0 z-20 overflow-x-auto shadow-sm no-print">
         <div class="max-w-5xl mx-auto px-6 flex space-x-6 text-sm">
             <button onclick="switchTab('tab_proposal', this)" class="tab-btn py-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">핵심 제안</button>
             <button onclick="switchTab('tab_labor', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">노무/비과세 상세</button>
@@ -180,7 +197,7 @@ html_content = f"""
                     <ul class="text-xs space-y-2 danger-list">
                         <li><b>형사처벌 리스크:</b> 정규직 미작성 시 벌금 최대 500만 원 (전과 기록)</li>
                         <li><b>즉시 부과 리스크:</b> 단시간/기간제 미작성 시 <b>과태료 500만 원 즉시 부과</b></li>
-                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서가 없으면 사업주가 100% 불리한 책임을 지게 됩니다.</li>
+                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서 부재는 사업주가 100% 불리한 책임을 지게 됩니다.</li>
                     </ul>
                 </div>
             </div>
@@ -285,30 +302,16 @@ html_content = f"""
                 <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-200 print-break-inside-avoid shadow-sm">
                     <h3 class="font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-2">🟢 1. 중소벤처기업진흥공단 및 바우처</h3>
                     <ul class="text-xs space-y-2 text-emerald-700">
-                        <li><b>[중진공 직접융자]</b> 고정금리 연 2.5~3.5%, 운전 5억/시설 60억 한도</li>
-                        <li><b>[혁신바우처]</b> 최대 5,000만원 무상 (시제품제작, 마케팅, 컨설팅 지원)</li>
-                        <li><b>[수출바우처]</b> 해외 진출 비용 최대 3,000만원 ~ 1억원 (90% 지원)</li>
-                    </ul>
-                </div>
-                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2">🔵 2. 보증기관 (신보/기보) 및 금융권</h3>
-                    <ul class="text-xs space-y-2 text-blue-700">
-                        <li><b>[보증서 대출]</b> 담보 없이 보증서 발급 (금리 4.0~5.5%), 보증료 감면 혜택</li>
-                        <li><b>[시중은행]</b> 재무제표 기반 자체 한도 산출, 정책자금 융통 시 이자 감면 연계</li>
+                        <li>• 융자: 고정금리 2.5~3.5%, 운전자금 5억/시설자금 60억 한도</li>
+                        <li>• 혁신바우처: 최대 5,000만원 무상 지원 (마케팅, 시제품 등)</li>
+                        <li>• 수출바우처: 해외 진출 지원 최대 1억원 (90% 국비 지원)</li>
                     </ul>
                 </div>
                 <div class="bg-red-50 p-6 rounded-2xl border border-red-200 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 3. 안전보건공단 지원 (보조금/융자)</h3>
+                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 2. 안전보건공단 지원사업</h3>
                     <ul class="text-xs space-y-2 text-red-700">
-                        <li><b>[안전동행지원]</b> 고위험 설비 교체 시 <b>최대 1억 무상지원</b> (50% 자부담)</li>
-                        <li><b>[산업재해예방융자]</b> 안전 설비 도입 시 <b>연 1.5% 고정금리</b> (최대 10억)</li>
-                    </ul>
-                </div>
-                <div class="bg-purple-50 p-6 rounded-2xl border border-purple-200 print-break-inside-avoid shadow-sm">
-                    <h3 class="font-bold text-purple-800 mb-3 border-b border-purple-200 pb-2">🟣 4. 지자체 정책자금 (도/시 자금)</h3>
-                    <ul class="text-xs space-y-2 text-purple-700">
-                        <li><b>[이차보전 지원]</b> 은행 이자 중 1.0~3.0%를 지자체가 대신 납부하여 실질 이자 절감</li>
-                        <li><b>[시흥시 자금]</b> 시 전용 예산으로 저리 운용 (조기 소진 유의 및 적기 신청 필수)</li>
+                        <li>• 안전동행지원: 고위험 설비 교체 보조금 최대 1억 (50% 매칭)</li>
+                        <li>• 산재예방융자: <b>연 1.5% 고정금리</b> 초저리 지원 (최대 10억)</li>
                     </ul>
                 </div>
             </div>
@@ -345,7 +348,11 @@ html_content = f"""
 
         function executePrint() {{
             document.body.classList.add('force-print-mode');
-            setTimeout(() => {{ window.print(); setTimeout(() => document.body.classList.remove('force-print-mode'), 500); }}, 200);
+            // 가로 출력을 위해 잠시 레이아웃을 인쇄용으로 고정
+            setTimeout(() => {{ 
+                window.print(); 
+                setTimeout(() => document.body.classList.remove('force-print-mode'), 500); 
+            }}, 200);
         }}
 
         {f'''
@@ -360,7 +367,7 @@ html_content = f"""
                     borderRadius: 8
                 }}]
             }},
-            options: {{ responsive: true, plugins: {{ legend: {{ display: false }} }} }}
+            options: {{ responsive: true, maintainAspectRatio: false, plugins: {{ legend: {{ display: false }} }} }}
         }});
         ''' if show_corp_tab else ""}
     </script>
@@ -372,4 +379,4 @@ with col2:
     st.subheader(f"💻 {client_name} 제안서 미리보기")
     components.html(html_content, height=1000, scrolling=True)
     b64 = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-    st.markdown(f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 [ {client_name} ] 최종 제안서 파일 저장</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 제안서 파일 저장 및 출력용 다운로드</a>', unsafe_allow_html=True)
