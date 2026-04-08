@@ -4,9 +4,9 @@ import base64
 from datetime import datetime
 
 # 페이지 기본 설정
-st.set_page_config(page_title="통합 경영제안서 생성기", layout="wide")
+st.set_page_config(page_title="제이원 통합 경영제안서 생성기", layout="wide")
 
-st.title("📊 통합 경영컨설팅 시스템")
+st.title("📊 주식회사 제이원 - 통합 경영컨설팅 시스템")
 st.write("좌측에 정보를 입력하세요. 모든 상세 데이터가 요약 없이 원문 그대로 제안서에 반영됩니다.")
 
 # 화면 분할 (입력폼 1 : 미리보기 2)
@@ -26,9 +26,9 @@ with col1:
     
     start_month = st.number_input("스케쥴 시작 월", min_value=1, max_value=12, value=4)
     m1 = start_month
-    m2 = (start_month % 12) + 1  # 인사/노무
-    m3 = (start_month + 3) % 12 + 1  # 인증 (3개월 반영)
-    m4 = (start_month + 4) % 12 + 1  # 재무/세무
+    m2 = (start_month % 12) + 1
+    m3 = (start_month + 3) % 12 + 1
+    m4 = (start_month + 4) % 12 + 1
 
     st.subheader("📝 3. 고용지원금 설정 (인원수)")
     ca, cb, cc = st.columns(3)
@@ -42,10 +42,11 @@ with col1:
         women_count = st.number_input("③ 새일여성", min_value=0, value=1)
         parental_count = st.number_input("⑥ 대체인력", min_value=0, value=0)
 
+    # 지원금 카드 생성 로직
     def generate_subsidy_card(title, target, eligible, max_amount_str, scheduled_count, total_amount):
         if eligible:
             return f"""
-            <div class="bg-amber-50 p-4 rounded-xl border border-amber-100 shadow-sm relative overflow-hidden print-break-inside-avoid mb-2">
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-100 shadow-sm relative overflow-hidden print-break-inside-avoid mb-2 h-full">
                 <div class="absolute right-0 top-0 bg-amber-200 text-amber-800 text-[10px] font-bold px-2 py-1 rounded-bl-lg">예정: {scheduled_count}명</div>
                 <h3 class="font-bold text-amber-800 text-sm mb-1">{title}</h3>
                 <p class="font-bold text-amber-900 text-xl">{total_amount:,}<span class="text-xs font-normal"> 만원</span></p>
@@ -54,7 +55,7 @@ with col1:
             """
         else:
             return f"""
-            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden opacity-60 grayscale print-break-inside-avoid mb-2">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden opacity-60 grayscale print-break-inside-avoid mb-2 h-full">
                 <h3 class="font-bold text-slate-600 text-sm mb-1">{title}</h3>
                 <p class="font-bold text-slate-400 text-xl">0<span class="text-xs font-normal"> 만원</span></p>
                 <p class="text-[10px] text-red-500 mt-1">※ 요건 미달(5인 미만 등)</p>
@@ -68,7 +69,6 @@ with col1:
     card_continuous = generate_subsidy_card("고령자계속고용", "정년연장", True, "1인 720만원(2년)", continuous_count, continuous_count * 720)
     card_disabled = generate_subsidy_card("장애인신규고용", "장애인", True, "1인 약 720만원", disabled_count, disabled_count * 720)
     card_parental = generate_subsidy_card("육아휴직대체인력", "대체인력", True, "1인 960만원(1년)", parental_count, parental_count * 960)
-    
     total_subsidy = (youth_count * (1200 if youth_eligible else 0)) + (senior_count * 240) + (women_count * 380) + (continuous_count * 720) + (disabled_count * 720) + (parental_count * 960)
 
     st.subheader("⚖️ 4. 법인 전환 검토 설정")
@@ -77,12 +77,12 @@ with col1:
         net_income = st.number_input("당기순이익 (만원)", min_value=0, value=15000, step=1000)
         rep_salary = st.number_input("대표자 월 급여 (만원)", min_value=0, value=500, step=50)
         yearly_salary = rep_salary * 12
-        p_tax = (net_income * 0.35) * 1.1 # 간이 계산
+        p_tax = (net_income * 0.35) * 1.1 
         p_health = net_income * 0.0709 
         personal_total_cost = p_tax + p_health
         corp_profit = max(0, net_income - yearly_salary)
         c_tax = (corp_profit * 0.09 if corp_profit <= 20000 else 1800 + (corp_profit-20000)*0.19) * 1.1
-        s_tax = (yearly_salary * 0.15) * 1.1 # 간이 계산
+        s_tax = (yearly_salary * 0.15) * 1.1 
         total_insurance = yearly_salary * 0.1869 
         corp_total_cost = c_tax + s_tax + total_insurance
         tax_diff = personal_total_cost - corp_total_cost
@@ -94,7 +94,7 @@ with col1:
     monthly_wage = min_wage * 209
 
 # ----------------------------------------------------------------------------------
-# HTML 소스코드 (스케쥴 타이틀 한글화 및 인쇄 유지 로직)
+# HTML (방대한 원본 데이터 유지 + 그래프 인쇄 기술 적용)
 # ----------------------------------------------------------------------------------
 html_content = f"""
 <!DOCTYPE html>
@@ -103,18 +103,20 @@ html_content = f"""
     <meta charset="UTF-8">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
         body {{ font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }}
         .tab-content {{ display: none; animation: fadeIn 0.4s ease-in-out; }}
         .tab-content.active {{ display: block; }}
         @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(5px); }} to {{ opacity: 1; transform: translateY(0); }} }}
         .text-gradient {{ background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-image: linear-gradient(to right, #2563eb, #059669); }}
+        .check-list li::before {{ content: '✔'; color: #0ea5e9; margin-right: 8px; font-weight: bold; }}
+        .danger-list li::before {{ content: '⚠️'; margin-right: 8px; font-weight: bold; }}
         
         @media print {{
             @page {{ size: A4 landscape; margin: 10mm; }}
             body {{ background-color: #ffffff !important; }}
-            .sticky, .tab-btn, #print_btn {{ display: none !important; }}
+            .sticky, .tab-btn, #print_btn, .no-print {{ display: none !important; }}
             .tab-content {{ display: none !important; }}
             .tab-content.print-active {{ 
                 display: block !important; 
@@ -148,7 +150,7 @@ html_content = f"""
         </div>
     </header>
 
-    <div class="bg-white border-b sticky top-0 z-20 overflow-x-auto shadow-sm">
+    <div class="bg-white border-b sticky top-0 z-20 overflow-x-auto shadow-sm no-print">
         <div class="max-w-5xl mx-auto px-6 flex space-x-6 text-sm">
             <button onclick="switchTab('tab_proposal', this)" class="tab-btn py-4 font-bold text-blue-600 border-b-2 border-blue-600 whitespace-nowrap">핵심 제안</button>
             <button onclick="switchTab('tab_labor', this)" class="tab-btn py-4 font-medium text-slate-500 whitespace-nowrap">노무/비과세 상세</button>
@@ -173,16 +175,42 @@ html_content = f"""
                     <h2 class="text-lg font-bold text-blue-800 mb-4 border-b pb-2">⏱️ 2026년 최저임금 및 법적 의무</h2>
                     <div class="flex justify-between mb-2"><span>2026년 최저 시급</span><p class="font-bold">{min_wage:,}원</p></div>
                     <div class="bg-blue-50 p-4 rounded-lg flex justify-between font-bold text-blue-700">
-                        <span>월 환산액 (월 209시간 기준)</span>
-                        <span>{monthly_wage:,}원</span>
+                        <span>월 환산액 (월 209시간 기준)</span><span>{monthly_wage:,}원</span>
                     </div>
+                    <p class="text-[11px] text-slate-400 mt-4 break-keep">※ 최저임금 위반 시 3년 이하 징역 또는 2천만원 이하 벌금이 부과되며 즉시 처벌 대상입니다.</p>
                 </div>
                 <div class="bg-red-50 rounded-2xl border border-red-100 p-6 text-red-800 font-medium">
                     <h2 class="text-lg font-bold mb-2">🚨 근로계약서 미작성 리스크</h2>
-                    <p class="text-xs">미작성 시 벌금/과태료 최대 500만원 및 분쟁 시 사업주 100% 불리</p>
+                    <ul class="text-xs space-y-2 danger-list">
+                        <li><b>형사처벌:</b> 정규직 미작성 시 벌금 최대 500만 원</li>
+                        <li><b>즉시 부과:</b> 단시간 미작성 시 <b>과태료 500만 원 즉시 부과</b></li>
+                        <li><b>분쟁 리스크:</b> 해고/임금 분쟁 시 계약서 부재 시 사업주 100% 불리</li>
+                    </ul>
                 </div>
             </div>
+            <div class="bg-white rounded-2xl border p-6 mb-8 print-break-inside-avoid">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 pl-2 border-l-4 border-slate-800">🏢 5인 미만 vs 5인 이상 노무관리 핵심 차이</h2>
+                <table class="w-full text-[11px] text-left border-collapse border border-slate-200">
+                    <thead class="bg-slate-100">
+                        <tr><th class="p-3 border">주요 법령</th><th class="p-3 border text-emerald-700">5인 미만 사업장</th><th class="p-3 border text-red-700">5인 이상 사업장</th></tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-600">
+                        <tr><td class="p-3 border font-bold">가산수당</td><td class="p-3 border">없음</td><td class="p-3 border font-bold text-red-600">통상임금 50% 가산 지급</td></tr>
+                        <tr><td class="p-3 border font-bold">연차유급휴가</td><td class="p-3 border">없음</td><td class="p-3 border font-bold text-red-600">법정 연차 발생 및 정산</td></tr>
+                        <tr><td class="p-3 border font-bold">부당해고 구제</td><td class="p-3 border">적용 제외</td><td class="p-3 border font-bold text-red-600">노동위 구제신청 가능</td></tr>
+                    </tbody>
+                </table>
             </div>
+            <div class="bg-emerald-50 rounded-2xl border border-emerald-100 p-6 print-break-inside-avoid">
+                <h2 class="text-lg font-bold text-emerald-800 mb-4 border-b pb-2">💎 4대보험 비과세 설계 (월 고정비 절감)</h2>
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="bg-white p-3 rounded text-center"><p class="text-[10px] font-bold">식대</p><p class="text-sm text-emerald-600 font-bold">20만</p></div>
+                    <div class="bg-white p-3 rounded text-center"><p class="text-[10px] font-bold">자가운전</p><p class="text-sm text-emerald-600 font-bold">20만</p></div>
+                    <div class="bg-white p-3 rounded text-center"><p class="text-[10px] font-bold">보육수당</p><p class="text-sm text-emerald-600 font-bold">20만</p></div>
+                    <div class="bg-white p-3 rounded text-center"><p class="text-[10px] font-bold">연구보조</p><p class="text-sm text-emerald-600 font-bold">20만</p></div>
+                </div>
+            </div>
+        </div>
 
         <div id="tab_corp" class="tab-content {'print-active' if show_corp_tab else ''}">
             <div class="bg-white rounded-2xl border p-8">
@@ -190,12 +218,15 @@ html_content = f"""
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 items-center">
                     <div class="space-y-4">
                         <div class="bg-red-50 p-4 rounded-xl border border-red-100">
-                            <p class="text-xs font-bold text-red-800">개인 유지 시 비용</p>
+                            <p class="text-xs font-bold text-red-800">개인 유지 비용</p>
                             <p class="text-3xl font-bold text-red-600">{personal_total_cost:,.0f}만 원</p>
                         </div>
                         <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                            <p class="text-xs font-bold text-blue-800">법인 전환 시 비용</p>
+                            <p class="text-xs font-bold text-blue-800">법인 전환 비용</p>
                             <p class="text-3xl font-bold text-blue-600">{corp_total_cost:,.0f}만 원</p>
+                        </div>
+                        <div class="bg-emerald-100 p-5 rounded-xl text-center shadow-inner">
+                            <p class="text-lg font-bold">💡 예상 절세액: {max(0, tax_diff):,.0f}만 원</p>
                         </div>
                     </div>
                     <div class="h-64 flex justify-center border rounded-xl bg-slate-50 p-2 relative">
@@ -209,29 +240,74 @@ html_content = f"""
         <div id="tab_fixed" class="tab-content print-active">
             <h2 class="text-xl font-bold mb-4 border-l-4 border-amber-500 pl-2">💰 고용지원금 시뮬레이션 (총 {total_subsidy:,}만원 예상)</h2>
             <div class="grid grid-cols-3 gap-3 mb-10">{card_youth}{card_senior}{card_women}{card_continuous}{card_disabled}{card_parental}</div>
+            <h2 class="text-xl font-bold mb-4 border-l-4 border-blue-500 pl-2">🏆 기업 핵심 인증 리스트</h2>
+            <div class="grid grid-cols-3 gap-4 mb-10">
+                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
+                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
+                    <h3 class="font-bold text-sm mb-1">여성기업인증</h3><p class="text-[10px] text-slate-500">• 수의계약 5천만원 한도 확대 / 입찰 가점</p>
+                </div>
+                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
+                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
+                    <h3 class="font-bold text-sm mb-1">직접생산 / 공장등록</h3><p class="text-[10px] text-slate-500">• 조달청 필수 / 제조업 세제 혜택</p>
+                </div>
+                <div onclick="toggleCert(this)" class="cert-card cursor-pointer bg-white p-4 rounded-xl border border-slate-200 shadow-sm transition-all hover:bg-blue-50 relative">
+                    <div class="cert-badge absolute right-0 top-0 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg hidden">✔️ 대상</div>
+                    <h3 class="font-bold text-sm mb-1">ISO / 메인비즈 / 이노비즈</h3><p class="text-[10px] text-slate-500">• 가점 확보 및 기술력 인증</p>
+                </div>
+            </div>
         </div>
 
         <div id="tab_fund" class="tab-content print-active">
-            <h2 class="text-xl font-bold mb-6 border-l-4 border-emerald-500 pl-2">🏦 기관별 정책자금 및 지원사업</h2>
+            <h2 class="text-xl font-bold mb-6 border-l-4 border-emerald-500 pl-2 text-emerald-800">🏦 기관별 정책자금 및 지원사업 상세 현황</h2>
             <div class="grid grid-cols-2 gap-6">
                 <div class="bg-emerald-50 p-6 rounded-2xl border border-emerald-200">
-                    <h3 class="font-bold text-emerald-800 mb-2">🟢 중진공 및 바우처</h3>
-                    <p class="text-xs text-emerald-700">융자 및 무상 지원사업 매칭</p>
+                    <h3 class="font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-2">🟢 1. 중소벤처기업진흥공단 및 바우처</h3>
+                    <ul class="text-xs space-y-2 text-emerald-700 font-bold">
+                        <li>• 융자: 고정금리 2.5~3.5%, 시설 60억/운전 5억 한도</li>
+                        <li>• 혁신바우처: 최대 5,000만원 무상 (컨설팅, 마케팅 등)</li>
+                        <li>• 수출바우처: 해외 마케팅 지원 최대 1억원 (90% 지원)</li>
+                    </ul>
                 </div>
-                <div class="bg-red-50 p-6 rounded-2xl border border-red-200">
-                    <h3 class="font-bold text-red-800 mb-2">🔴 안전보건공단 지원</h3>
-                    <p class="text-xs text-red-700">안전동행지원 최대 1억 무상 보조</p>
+                <div class="bg-blue-50 p-6 rounded-2xl border border-blue-200">
+                    <h3 class="font-bold text-blue-800 mb-3 border-b border-blue-200 pb-2">🔵 2. 보증기관 (신보/기보) 및 은행</h3>
+                    <ul class="text-xs space-y-2 text-blue-700 font-bold">
+                        <li>• 보증서 대출: 담보 없이 기술력 보증 발급 (금리 4~5%)</li>
+                        <li>• 정책자금 연계: 이자 감면 및 한도 최적화 매칭</li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 p-6 rounded-2xl border border-red-200 mt-6">
+                    <h3 class="font-bold text-red-800 mb-3 border-b border-red-200 pb-2">🔴 3. 안전보건공단 지원사업</h3>
+                    <ul class="text-xs space-y-2 text-red-700 font-bold">
+                        <li>• 안전동행지원: 노후 설비 교체 보조금 최대 1억</li>
+                        <li>• 산재예방융자: <b>연 1.5% 고정금리</b> (최대 10억)</li>
+                    </ul>
+                </div>
+                <div class="bg-purple-50 p-6 rounded-2xl border border-purple-200 mt-6">
+                    <h3 class="font-bold text-purple-800 mb-3 border-b border-purple-200 pb-2">🟣 4. 지자체 정책자금 (이차보전)</h3>
+                    <ul class="text-xs space-y-2 text-purple-700 font-bold">
+                        <li>• 이차보전: 은행 이자 중 1.0~3.0%를 지자체가 대신 납부</li>
+                        <li>• 시흥시 전용자금: 조기 소진 대비 선착순 관리</li>
+                    </ul>
                 </div>
             </div>
         </div>
 
         <div id="tab_schedule" class="tab-content print-active">
-            <div class="bg-white rounded-2xl border p-8 print-break-inside-avoid">
-                <h2 class="text-2xl font-bold mb-6 pb-4 border-b">📅 {my_company_name} - {client_name} 컨설팅 로드맵</h2>
-                <div class="space-y-8">
-                    <div class="flex gap-6 items-start"><div class="bg-slate-800 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}월</div><div><p class="font-bold">인사/노무 기반 정비 및 비과세 최적화</p></div></div>
-                    <div class="flex gap-6 items-start"><div class="bg-blue-600 text-white px-3 py-1 rounded font-bold text-sm">{m1:02d}~{m3:02d}월</div><div><p class="font-bold">핵심 기업인증(벤처, ISO, 메인비즈) 확보</p></div></div>
-                    <div class="flex gap-6 items-start"><div class="bg-emerald-600 text-white px-3 py-1 rounded font-bold text-sm">{m3:02d}~{m4:02d}월</div><div><p class="font-bold">법인전환 및 기관 자금 매칭 실행</p></div></div>
+            <div class="bg-slate-900 text-white rounded-2xl border p-8 shadow-2xl print-break-inside-avoid">
+                <h2 class="text-2xl font-bold mb-6 pb-4 border-b border-slate-700 text-amber-400">📅 {my_company_name} - {client_name} 컨설팅 로드맵</h2>
+                <div class="space-y-10">
+                    <div class="flex gap-6 items-start">
+                        <div class="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-xl">{m1:02d}월</div>
+                        <div><p class="text-lg font-bold">인사/노무 기반 정비 및 비과세 설계</p><p class="text-xs text-slate-400">근로계약서 전면 개편 및 4대보험 고정비 즉시 절감 설계 완료</p></div>
+                    </div>
+                    <div class="flex gap-6 items-start">
+                        <div class="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-xl">{m1:02d}~{m3:02d}월</div>
+                        <div><p class="text-lg font-bold">핵심 기업인증(벤처, ISO, 메인비즈) 확보</p><p class="text-xs text-slate-400">가점 확보를 위한 필수 인증 프로세스 3개월 집중 가동</p></div>
+                    </div>
+                    <div class="flex gap-6 items-start">
+                        <div class="bg-blue-600 text-white px-4 py-2 rounded-xl font-black text-xl">{m3:02d}~{m4:02d}월</div>
+                        <div><p class="text-lg font-bold">법인전환 확정 및 정책자금 유치</p><p class="text-xs text-slate-400">절세 시뮬레이션 기반 법인전환 및 기관별 자금 집행 마무리</p></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -274,6 +350,11 @@ html_content = f"""
             if (tabId === 'tab_corp') setTimeout(renderTaxChart, 100);
         }}
 
+        function toggleCert(el) {{
+            el.classList.toggle('border-blue-500'); el.classList.toggle('ring-4'); el.classList.toggle('ring-blue-100');
+            const badge = el.querySelector('.cert-badge'); if (badge) badge.classList.toggle('hidden');
+        }}
+
         function executePrint() {{
             const canvas = document.getElementById('taxChart');
             if (canvas) {{
@@ -282,7 +363,9 @@ html_content = f"""
             }}
             window.print();
         }}
-        if (document.getElementById('taxChart')) setTimeout(renderTaxChart, 500);
+        
+        // 초기 로드 시 차트 렌더링 시도
+        setTimeout(renderTaxChart, 500);
     </script>
 </body>
 </html>
@@ -292,4 +375,4 @@ with col2:
     st.subheader(f"💻 {client_name} 제안서 미리보기")
     components.html(html_content, height=1000, scrolling=True)
     b64 = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-    st.markdown(f'<a href="data:text/html;base64,{b64}" download="{client_name}_제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px;">💾 제안서 파일 저장하기</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="data:text/html;base64,{b64}" download="{client_name}_제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">💾 [ {client_name} ] 최종 제안서 파일 저장</a>', unsafe_allow_html=
