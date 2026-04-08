@@ -40,11 +40,11 @@ with col1:
     # 스케쥴표 시작 월 설정
     start_month = st.number_input("스케쥴 시작 월 (숫자만 입력)", min_value=1, max_value=12, value=4)
     
-    # 스케쥴 달 계산 (12월이 넘어가면 1월로 순환)
+    # 스케쥴 달 계산 (인증 기간을 3개월로 연장, 12월이 넘어가면 1월로 순환)
     m1 = start_month
-    m2 = (start_month % 12) + 1
-    m3 = (start_month + 1) % 12 + 1
-    m4 = (start_month + 2) % 12 + 1
+    m2 = (start_month % 12) + 1                 # 인사/노무: 1개월 소요
+    m3 = (start_month + 3) % 12 + 1             # 인증 획득: 3개월 소요
+    m4 = (start_month + 4) % 12 + 1             # 재무/세무: 1개월 소요
 
     st.subheader("📝 3. 고용지원금 자동 계산기 (6대 핵심 지원금)")
     st.write(f"현재 근로자 수({current_employees}명)를 기준으로 수령 가능 여부와 금액이 계산됩니다.")
@@ -181,33 +181,38 @@ html_content = f"""
         }}
 
         /* ========================================= */
-        /* 🖨️ 프린트 출력 전용 CSS (자동 레이아웃 변경) */
+        /* 🖨️ 강제 인쇄 모드 제어 CSS (JS 연동) */
         /* ========================================= */
+        body.force-print-mode .tab-content {{ 
+            display: block !important; 
+            opacity: 1 !important;
+            margin-bottom: 2rem !important;
+        }}
+        body.force-print-mode .tab-btn {{ display: none !important; }}
+        body.force-print-mode #print_btn {{ display: none !important; }}
+        
         @media print {{
             body {{ background-color: #ffffff !important; }}
+            .sticky, .tab-btn, #print_btn {{ display: none !important; }}
             
-            /* 네비게이션 탭 버튼 인쇄 시 숨김 */
-            .sticky, .tab-btn {{ display: none !important; }}
-            
-            /* 모든 탭 내용을 인쇄 시 강제로 한 번에 펼침 */
-            .tab-content {{ 
-                display: block !important; 
-                page-break-before: always; /* 탭이 바뀔 때마다 새 페이지로 넘김 */
+            /* 강제 인쇄 모드 활성화 시 각 탭 영역 설정 */
+            body.force-print-mode #tab_proposal, 
+            body.force-print-mode #tab_labor, 
+            body.force-print-mode #tab_fixed, 
+            body.force-print-mode #tab_schedule {{
+                display: block !important;
+                page-break-before: always;
                 break-before: page;
-                margin-top: 0 !important;
-                padding-top: 20px !important;
             }}
+            /* 첫 번째 탭은 새 페이지 안 넘김 */
+            body.force-print-mode #tab_proposal {{ page-break-before: avoid; break-before: auto; }}
             
-            /* 첫 번째 탭은 새 페이지로 넘기지 않음 */
-            #tab_proposal {{ page-break-before: avoid; break-before: auto; padding-top: 0 !important; }}
-            
-            /* 박스가 페이지 중간에 잘리는 것을 방지 */
+            /* 박스가 중간에 잘리는 현상 방지 */
             .print-break-inside-avoid, .bg-white, .bg-amber-50, .bg-emerald-50, .bg-red-50 {{
                 page-break-inside: avoid;
                 break-inside: avoid;
             }}
             
-            /* 불필요한 테두리 그림자 제거 */
             .shadow-sm {{ box-shadow: none !important; border: 1px solid #e2e8f0 !important; }}
         }}
     </style>
@@ -223,7 +228,12 @@ html_content = f"""
                 <h1 class="text-4xl font-bold mb-3 leading-tight">{client_name} <br><span class="text-gradient">맞춤형 경영제안서</span></h1>
                 <p class="text-slate-400 font-light">업종코드: {industry_code} / 상시근로자: {current_employees}명</p>
             </div>
-            <div class="mt-4 md:mt-0 text-right">
+            <div class="mt-4 md:mt-0 text-right flex flex-col items-end">
+                <!-- 🖨️ 전용 인쇄 버튼 추가 -->
+                <button id="print_btn" onclick="executePrint()" class="mb-4 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded shadow transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    전체 내용 인쇄하기
+                </button>
                 <p class="text-slate-400 text-sm">제안일자: <span id="auto_date"></span></p>
                 <p class="text-xl font-bold mt-1">{my_company_name}</p>
             </div>
@@ -253,7 +263,7 @@ html_content = f"""
             </div>
         </div>
 
-        <!-- [신규 추가] TAB 2: 노무 및 비과세 설계 -->
+        <!-- [노무] TAB 2: 노무 및 비과세 설계 -->
         <div id="tab_labor" class="tab-content">
             
             <!-- 최저임금 & 근로계약서 -->
@@ -385,12 +395,13 @@ html_content = f"""
                 </div>
             </div>
 
-            <!-- 2. 고정 인증 항목 -->
+            <!-- 2. 고정 인증 항목 (추가 인증 포함) -->
             <div class="mb-10 print-break-inside-avoid">
                 <h2 class="text-xl font-bold text-slate-800 mb-4 pl-2 border-l-4 border-blue-500">🏆 기업 핵심 인증별 혜택</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 기존 4개 -->
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-blue-700 mb-2">연구전담부서 / 연구소</h3>
+                        <h3 class="font-bold text-blue-700 mb-2">기업부설연구소 / 전담부서</h3>
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 연구원 인당 급여의 25% 법인세 세액공제</li>
                             <li>• 연구원 인당 급여 중 월 20만원 비과세 처리</li>
@@ -415,6 +426,28 @@ html_content = f"""
                         <ul class="text-sm text-slate-600 space-y-1">
                             <li>• 정책자금 대출 실행 시 이자율 인하 및 한도 상향</li>
                             <li>• 외국인 채용 제한 완화 및 전용 지원금 신청 가능</li>
+                        </ul>
+                    </div>
+                    <!-- 신규 추가 3개 -->
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
+                        <h3 class="font-bold text-blue-800 mb-2">여성기업 인증</h3>
+                        <ul class="text-sm text-blue-900 space-y-1">
+                            <li>• 공공기관 수의계약 한도 5천만 원으로 확대</li>
+                            <li>• 공공기관 의무구매 대상 및 입찰 가점 부여 혜택</li>
+                        </ul>
+                    </div>
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm">
+                        <h3 class="font-bold text-blue-800 mb-2">직접생산확인서</h3>
+                        <ul class="text-sm text-blue-900 space-y-1">
+                            <li>• 조달청(나라장터) 및 공공기관 입찰 참여 필수 요건</li>
+                            <li>• 중소기업간 경쟁제품 지정 시 공공 조달시장 진입 가능</li>
+                        </ul>
+                    </div>
+                    <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 shadow-sm md:col-span-2 lg:col-span-1">
+                        <h3 class="font-bold text-blue-800 mb-2">공장등록</h3>
+                        <ul class="text-sm text-blue-900 space-y-1">
+                            <li>• 정부 주요 지원사업 및 융자 신청 시 필수 기본 요건</li>
+                            <li>• 제조업 기반 각종 세제 혜택 및 전력 요금 감면 적용</li>
                         </ul>
                     </div>
                 </div>
@@ -489,7 +522,7 @@ html_content = f"""
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-bold mb-2">{m2:02d}월 ~ {m3:02d}월</span>
                         <h3 class="text-lg font-bold text-slate-800">인증 획득 프로세스 가동</h3>
-                        <p class="text-slate-600 text-sm mt-1">연구전담부서 설립 신청, 뿌리기업/소부장 사전 점검 및 신청, 여성/벤처기업 신청 준비</p>
+                        <p class="text-slate-600 text-sm mt-1">연구전담부서 설립 신청, 뿌리기업/소부장 사전 점검 및 신청, 여성/벤처기업 신청 및 현장 준비</p>
                     </div>
                     <!-- Phase 3 -->
                     <div class="relative pl-8">
@@ -503,7 +536,7 @@ html_content = f"""
                         <div class="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-purple-500 ring-4 ring-white"></div>
                         <span class="inline-block px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-sm font-bold mb-2">{m4:02d}월 이후 지속</span>
                         <h3 class="text-lg font-bold text-slate-800">자금 매칭 및 사후 관리</h3>
-                        <p class="text-slate-600 text-sm mt-1">완성된 인증 및 재무제표를 바탕으로 중진공 및 은행 자금 검토, 고용지원금 지속 관리</p>
+                        <p class="text-slate-600 text-sm mt-1">완성된 인증 및 재무제표를 바탕으로 중진공 및 은행 자금 검토, 고용지원금 지속 관리 및 직접생산/공장등록 사후점검</p>
                     </div>
                 </div>
             </div>
@@ -533,6 +566,22 @@ html_content = f"""
             }});
             document.getElementById(tabId).classList.add('active');
         }}
+
+        // 3. 강제 인쇄 실행 스크립트 (모든 탭을 강제로 열고 인쇄)
+        function executePrint() {{
+            // body에 강제 인쇄용 클래스 추가
+            document.body.classList.add('force-print-mode');
+            
+            // 약간의 딜레이를 주어 화면 렌더링 후 인쇄 다이얼로그 호출
+            setTimeout(() => {{
+                window.print();
+                
+                // 인쇄 다이얼로그가 닫히면 강제 인쇄용 클래스 제거
+                setTimeout(() => {{
+                    document.body.classList.remove('force-print-mode');
+                }}, 500);
+            }}, 200);
+        }}
     </script>
 </body>
 </html>
@@ -546,6 +595,6 @@ with col2:
 
     # 완성된 HTML 파일 다운로드 버튼 생성
     b64 = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-    download_link = f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 [ {client_name} ] 맞춤 제안서 파일로 다운로드 (프린트 지원)</a>'
+    download_link = f'<a href="data:text/html;base64,{b64}" download="{client_name}_경영제안서.html" style="display: block; width: 100%; text-align: center; padding: 15px 0; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">📥 [ {client_name} ] 맞춤 제안서 파일로 다운로드 (다운로드 후 우측 상단 🖨️ 인쇄 버튼 클릭)</a>'
     
     st.markdown(download_link, unsafe_allow_html=True)
